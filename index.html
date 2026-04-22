@@ -148,7 +148,7 @@ body {
 #main { flex: 1; overflow-y: auto; height: 100vh; }
 #main::-webkit-scrollbar { width: 5px; }
 #main::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
-.lesson-page { display: none; max-width: 820px; margin: 0 auto; padding: 52px 64px 80px; }
+.lesson-page { display: none; max-width: 1080px; margin: 0 auto; padding: 52px 80px 80px; }
 .lesson-page.active { display: block; }
 
 /* Lesson header */
@@ -173,7 +173,7 @@ body {
 .lesson-intro {
   font-size: 14px;
   color: var(--text-mid);
-  max-width: 640px;
+  max-width: 780px;
   line-height: 1.8;
   margin-bottom: 36px;
   padding-bottom: 28px;
@@ -223,8 +223,8 @@ body {
   border-radius: 0 4px 4px 0;
   line-height: 1.6;
 }
-.code-body { padding: 18px 20px; overflow-x: auto; font-size: 12.5px; line-height: 1.8; font-family: 'JetBrains Mono', monospace; white-space: pre; }
-.code-body pre { white-space: inherit; font-family: inherit; margin: 0; }
+.code-body { padding: 18px 20px; overflow-x: auto; font-size: 12.5px; line-height: 1.8; font-family: 'JetBrains Mono', monospace; }
+.code-body pre { white-space: pre; font-family: 'JetBrains Mono', monospace; margin: 0; }
 /* Syntax colors */
 .ck { color: #aa72f0; }
 .cs { color: #36d9a0; }
@@ -236,9 +236,9 @@ body {
 .co { color: #f0a429; }
 .cv { color: #e8edf8; }
 /* Annotated lines */
-.al { display: inline-flex; width: 100%; align-items: baseline; min-width: 0; }
-.al-code { flex: 1 1 0; min-width: 0; white-space: pre; overflow: hidden; }
-.al-note { font-size: 10.5px; color: #f0a429; opacity: 0.75; white-space: nowrap; padding-left: 20px; font-style: italic; flex: 0 0 auto; max-width: 42%; overflow: hidden; text-overflow: ellipsis; }
+.al { display: inline-flex; width: 100%; align-items: baseline; }
+.al-code { flex: 1 1 0; min-width: 0; }
+.al-note { font-size: 10.5px; color: #f0a429; opacity: 0.75; white-space: nowrap; padding-left: 24px; font-style: italic; flex: 0 0 auto; max-width: 46%; overflow: hidden; text-overflow: ellipsis; }
 
 /* Callouts */
 .callout { border-left: 3px solid var(--accent); padding: 12px 16px; background: rgba(78,142,247,0.05); border-radius: 0 5px 5px 0; margin: 16px 0; font-size: 12.5px; line-height: 1.75; }
@@ -318,7 +318,7 @@ body {
 /* Intro page */
 .big-title { font-family: 'Playfair Display', serif; font-size: 48px; font-weight: 700; color: var(--text-bright); line-height: 1.1; margin-bottom: 8px; }
 .big-title em { font-style: italic; color: var(--accent); }
-.intro-sub { font-size: 14px; color: var(--text-mid); max-width: 560px; line-height: 1.85; margin-bottom: 40px; }
+.intro-sub { font-size: 14px; color: var(--text-mid); max-width: 720px; line-height: 1.85; margin-bottom: 40px; }
 .intro-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 36px; }
 .intro-card { padding: 16px 18px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; }
 .intro-card .ic-label { font-size: 9.5px; letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-dim); margin-bottom: 7px; }
@@ -492,58 +492,55 @@ function updateProgress() {
 }
 
 // ── QUIZ ──
-function answer(el, correct, qId, explanation) {
-  const quiz = document.getElementById(qId);
+function answer(el) {
+  var correct     = el.dataset.correct === 'true';
+  var qId         = el.dataset.qid;
+  var explanation = el.dataset.exp || '';
+  var quiz = document.getElementById(qId);
   if (!quiz || quiz.dataset.answered) return;
   quiz.dataset.answered = 'true';
-  quiz.querySelectorAll('.quiz-opt').forEach(o => o.classList.add('disabled'));
+  quiz.querySelectorAll('.quiz-opt').forEach(function(o) { o.classList.add('disabled'); });
   el.classList.add(correct ? 'correct' : 'wrong');
-  const exp = document.getElementById(qId + '-exp');
+  var exp = document.getElementById(qId + '-exp');
   if (exp) { exp.textContent = explanation; exp.classList.add('visible'); }
 }
 
 // ── PROMPT LAB ──
 function evaluatePrompt(labId) {
-  const input = document.getElementById('pl-input-' + labId);
-  const feedback = document.getElementById('pl-feedback-' + labId);
-  const scenarioEl = document.getElementById('pl-scenario-' + labId);
-  const criteria = (scenarioEl?.dataset.context || '').split('.').filter(s => s.trim().length > 10);
-  if (!input?.value.trim()) {
-    feedback.innerHTML = '<span style="color:var(--accent3)">Write something first — even a rough attempt is useful to review.</span>';
+  var input    = document.getElementById('pl-input-' + labId);
+  var feedback = document.getElementById('pl-feedback-' + labId);
+  if (!input || !input.value.trim()) {
+    feedback.innerHTML = '<span style="color:var(--accent3)">Write something first — even a rough attempt is worth reviewing.</span>';
     feedback.classList.add('visible');
     return;
   }
-  const prompt = input.value.trim().toLowerCase();
-  // Score on four dimensions
-  const checks = [
-    { label: 'Specificity', q: 'Do you name specific technical concepts, properties, or methods?', pass: prompt.length > 60 },
-    { label: 'Scope', q: 'Is it clear which file, function, or element to target?', pass: /class|function|element|file|#|\.|\bthe\b/.test(prompt) },
-    { label: 'Constraints', q: 'Do you say what to preserve or what NOT to do?', pass: /don.t|keep|preserve|without|existing|unchanged|only|not/.test(prompt) },
-    { label: 'Actionability', q: 'Could Claude act on this without asking a follow-up question?', pass: prompt.split(' ').length >= 15 }
+  var prompt = input.value.trim().toLowerCase();
+  var checks = [
+    { label: 'Specificity', desc: 'Do you name specific properties, methods, or elements?',    pass: prompt.length > 60 },
+    { label: 'Scope',       desc: 'Is it clear which file, function, or selector to target?',  pass: /class|function|#|file|the [a-z]/.test(prompt) },
+    { label: 'Constraints', desc: 'Do you say what to preserve or avoid breaking?',            pass: /don.t|keep|preserve|existing|unchanged|without|only|not/.test(prompt) },
+    { label: 'Actionable',  desc: 'Could Claude act on this without a follow-up question?',    pass: prompt.split(' ').length >= 15 }
   ];
-  const score = checks.filter(c => c.pass).length;
-  const color = score >= 3 ? 'var(--accent2)' : score === 2 ? 'var(--accent3)' : 'var(--accent4)';
-  const label = score >= 3 ? 'Strong prompt' : score === 2 ? 'Getting there' : 'Needs more detail';
-  let html = `<div style="color:${color};font-size:10px;letter-spacing:0.12em;text-transform:uppercase;font-weight:700;margin-bottom:10px">${label} — ${score}/4 criteria met</div>`;
+  var score = checks.filter(function(c){ return c.pass; }).length;
+  var color = score >= 3 ? 'var(--accent2)' : score >= 2 ? 'var(--accent3)' : 'var(--accent4)';
+  var label = score >= 3 ? 'Strong prompt' : score >= 2 ? 'Getting there' : 'Needs more detail';
+  var html = '<div style="color:' + color + ';font-size:10px;letter-spacing:0.12em;text-transform:uppercase;font-weight:700;margin-bottom:10px">' + label + ' — ' + score + '/4 criteria met</div>';
   html += '<div style="display:flex;flex-direction:column;gap:7px;">';
-  checks.forEach(c => {
-    const icon = c.pass ? '✓' : '○';
-    const col = c.pass ? 'var(--accent2)' : 'var(--text-dim)';
-    html += `<div style="display:flex;gap:8px;font-size:12px;"><span style="color:${col};font-weight:700;flex-shrink:0">${icon} ${c.label}</span><span style="color:var(--text-dim)">${c.q}</span></div>`;
+  checks.forEach(function(c) {
+    var icon = c.pass ? '&#10003;' : '&#9675;';
+    var col  = c.pass ? 'var(--accent2)' : 'var(--text-dim)';
+    html += '<div style="display:flex;gap:8px;font-size:12px;"><span style="color:' + col + ';font-weight:700;flex-shrink:0">' + icon + ' ' + c.label + '</span><span style="color:var(--text-dim)">' + c.desc + '</span></div>';
   });
   html += '</div>';
-  if (score < 4) {
-    html += '<div style="margin-top:10px;font-size:11.5px;color:var(--text-dim)">Compare your prompt to the example below to see what\'s missing.</div>';
-  }
+  if (score < 4) { html += '<div style="margin-top:10px;font-size:11.5px;color:var(--text-dim)">Compare with the example prompt below to see what to add.</div>'; }
   feedback.innerHTML = html;
   feedback.classList.add('visible');
 }
+
 function toggleExample(labId) {
-  const el = document.getElementById('pl-example-' + labId);
+  var el = document.getElementById('pl-example-' + labId);
   if (!el) return;
   el.classList.toggle('visible');
-  const btn = document.querySelector(`[onclick="toggleExample('${labId}')"]`);
-  if (btn) btn.textContent = el.classList.contains('visible') ? 'Hide Example' : 'Show Example Prompt';
 }
 
 // ── INIT ──
@@ -552,8 +549,16 @@ window.addEventListener('DOMContentLoaded', () => { buildNav(); });
 
 <script>
 registerModule({ id:'html', label:'01 — HTML & CSS', color:'#e05c78' });
+registerLesson({ id:'html1', modId:'html', num:1, title:'Document Structure & the DOM', templateId:'tpl-html1' });
+registerLesson({ id:'html2', modId:'html', num:2, title:'Selectors & Specificity', templateId:'tpl-html2' });
+registerLesson({ id:'html3', modId:'html', num:3, title:'The Box Model', templateId:'tpl-html3' });
+registerLesson({ id:'html4', modId:'html', num:4, title:'Layout: Flexbox', templateId:'tpl-html4' });
+registerLesson({ id:'html5', modId:'html', num:5, title:'Layout: CSS Grid', templateId:'tpl-html5' });
+registerLesson({ id:'html6', modId:'html', num:6, title:'CSS Variables, Media Queries & Transitions', templateId:'tpl-html6' });
+</script>
 
-registerLesson({ id:'html1', modId:'html', num:1, title:'Document Structure & the DOM', html:`
+<template id="tpl-html1">
+
 <div class="lesson-eyebrow">
   <span class="lesson-mod-tag" style="background:rgba(224,92,120,0.15);color:#e05c78">HTML &amp; CSS</span>
   <span class="lesson-num">Lesson 1 of 6</span>
@@ -647,25 +652,27 @@ registerLesson({ id:'html1', modId:'html', num:1, title:'Document Structure & th
 <div class="quiz-item" id="q-html1-1">
   <div class="quiz-q">What is the difference between the <code>&lt;head&gt;</code> and <code>&lt;body&gt;</code> of an HTML document?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-html1-1','The head contains metadata and resources — things for the browser, not the user. The body contains what\'s displayed.')"><span class="quiz-radio"></span> head contains text content; body contains images</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-html1-1','Correct. The head is for metadata (title, charset), linked stylesheets, and scripts that don\'t render. The body is everything the user actually sees.')"><span class="quiz-radio"></span> head contains metadata and loaded resources; body contains all visible page content</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-html1-1','Both are required in a valid HTML document.')"><span class="quiz-radio"></span> head is optional; body is required</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-html1-1" data-exp="The head contains metadata and resources — things for the browser, not the user. The body contains what's displayed." onclick="answer(this)"><span class="quiz-radio"></span> head contains text content; body contains images</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-html1-1" data-exp="Correct. The head is for metadata (title, charset), linked stylesheets, and scripts that don't render. The body is everything the user actually sees." onclick="answer(this)"><span class="quiz-radio"></span> head contains metadata and loaded resources; body contains all visible page content</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-html1-1" data-exp="Both are required in a valid HTML document." onclick="answer(this)"><span class="quiz-radio"></span> head is optional; body is required</div>
   </div>
   <div class="quiz-exp" id="q-html1-1-exp"></div>
 </div>
 <div class="quiz-item" id="q-html1-2">
   <div class="quiz-q">Claude Code generates <code>&lt;section id="results"&gt;</code>. What does the <code>id</code> attribute do?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-html1-2','IDs don\'t affect visual styling on their own — they\'re identifiers used by CSS (#results) and JS (getElementById).')"><span class="quiz-radio"></span> It makes the section bold and prominent</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-html1-2','Correct. An id gives an element a unique name. CSS targets it with #results; JavaScript finds it with document.getElementById(\"results\"). IDs must be unique on the page.')"><span class="quiz-radio"></span> It gives the element a unique name that CSS and JS can use to target it specifically</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-html1-2','IDs don\'t control document position or order.')"><span class="quiz-radio"></span> It controls where in the document the section is rendered</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-html1-2" data-exp="IDs don't affect visual styling on their own — they're identifiers used by CSS (#results) and JS (getElementById)." onclick="answer(this)"><span class="quiz-radio"></span> It makes the section bold and prominent</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-html1-2" data-exp="Correct. An id gives an element a unique name. CSS targets it with #results; JavaScript finds it with document.getElementById(&quot;results&quot;). IDs must be unique on the page." onclick="answer(this)"><span class="quiz-radio"></span> It gives the element a unique name that CSS and JS can use to target it specifically</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-html1-2" data-exp="IDs don't control document position or order." onclick="answer(this)"><span class="quiz-radio"></span> It controls where in the document the section is rendered</div>
   </div>
   <div class="quiz-exp" id="q-html1-2-exp"></div>
 </div>
 <button class="btn btn-next" onclick="markLessonDone('html1')">Complete Lesson → Next</button>
-`});
 
-registerLesson({ id:'html2', modId:'html', num:2, title:'Selectors & Specificity', html:`
+</template>
+
+<template id="tpl-html2">
+
 <div class="lesson-eyebrow">
   <span class="lesson-mod-tag" style="background:rgba(224,92,120,0.15);color:#e05c78">HTML &amp; CSS</span>
   <span class="lesson-num">Lesson 2 of 6</span>
@@ -754,25 +761,27 @@ registerLesson({ id:'html2', modId:'html', num:2, title:'Selectors & Specificity
 <div class="quiz-item" id="q-html2-1">
   <div class="quiz-q">Two rules: <code>.card p { color: red; }</code> and <code>p { color: blue; }</code>. What color is the text in a paragraph inside .card?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-html2-1','File order doesn\'t determine the winner here — specificity does. .card p scores higher.')"><span class="quiz-radio"></span> Blue — the last rule in the file wins</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-html2-1','Correct. .card p scores 11 (one class + one tag) vs. p which scores 1. Higher specificity wins regardless of file order.')"><span class="quiz-radio"></span> Red — .card p has higher specificity than p alone</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-html2-1','They don\'t cancel — specificity always produces a clear winner.')"><span class="quiz-radio"></span> Neither — conflicting rules cancel each other out</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-html2-1" data-exp="File order doesn't determine the winner here — specificity does. .card p scores higher." onclick="answer(this)"><span class="quiz-radio"></span> Blue — the last rule in the file wins</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-html2-1" data-exp="Correct. .card p scores 11 (one class + one tag) vs. p which scores 1. Higher specificity wins regardless of file order." onclick="answer(this)"><span class="quiz-radio"></span> Red — .card p has higher specificity than p alone</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-html2-1" data-exp="They don't cancel — specificity always produces a clear winner." onclick="answer(this)"><span class="quiz-radio"></span> Neither — conflicting rules cancel each other out</div>
   </div>
   <div class="quiz-exp" id="q-html2-1-exp"></div>
 </div>
 <div class="quiz-item" id="q-html2-2">
   <div class="quiz-q">What does <code>.toolbar > button</code> select that <code>.toolbar button</code> does NOT?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-html2-2','It\'s the opposite — > is more restrictive, not more inclusive.')"><span class="quiz-radio"></span> More buttons — it includes nested ones too</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-html2-2','Correct. The > child combinator selects only direct children. A button inside a div inside .toolbar would be caught by .toolbar button (descendant) but NOT by .toolbar > button (direct child only).')"><span class="quiz-radio"></span> Nothing extra — > is more restrictive; it only selects direct children, not deeper descendants</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-html2-2','Both select HTML button elements — the difference is how deep they look.')"><span class="quiz-radio"></span> Only disabled buttons</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-html2-2" data-exp="It's the opposite — > is more restrictive, not more inclusive." onclick="answer(this)"> is more restrictive, not more inclusive.')"><span class="quiz-radio"></span> More buttons — it includes nested ones too</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-html2-2" data-exp="Correct. The > child combinator selects only direct children. A button inside a div inside .toolbar would be caught by .toolbar button (descendant) but NOT by .toolbar > button (direct child only)." onclick="answer(this)"> child combinator selects only direct children. A button inside a div inside .toolbar would be caught by .toolbar button (descendant) but NOT by .toolbar > button (direct child only).')"><span class="quiz-radio"></span> Nothing extra — > is more restrictive; it only selects direct children, not deeper descendants</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-html2-2" data-exp="Both select HTML button elements — the difference is how deep they look." onclick="answer(this)"><span class="quiz-radio"></span> Only disabled buttons</div>
   </div>
   <div class="quiz-exp" id="q-html2-2-exp"></div>
 </div>
 <button class="btn btn-next" onclick="markLessonDone('html2')">Complete Lesson → Next</button>
-`});
 
-registerLesson({ id:'html3', modId:'html', num:3, title:'The Box Model', html:`
+</template>
+
+<template id="tpl-html3">
+
 <div class="lesson-eyebrow">
   <span class="lesson-mod-tag" style="background:rgba(224,92,120,0.15);color:#e05c78">HTML &amp; CSS</span>
   <span class="lesson-num">Lesson 3 of 6</span>
@@ -857,25 +866,27 @@ registerLesson({ id:'html3', modId:'html', num:3, title:'The Box Model', html:`
 <div class="quiz-item" id="q-html3-1">
   <div class="quiz-q">With default <code>box-sizing: content-box</code>, an element has <code>width: 300px; padding: 20px; border: 1px solid</code>. What is its rendered width?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-html3-1','300px is the answer with border-box. With content-box, padding and border are added on top of the 300px content width.')"><span class="quiz-radio"></span> 300px</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-html3-1','You need to add padding on both sides (20+20=40) and border on both sides (1+1=2): 300+40+2=342.')"><span class="quiz-radio"></span> 320px</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-html3-1','Correct. content-box: width(300) + padding-left(20) + padding-right(20) + border-left(1) + border-right(1) = 342px.')"><span class="quiz-radio"></span> 342px</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-html3-1" data-exp="300px is the answer with border-box. With content-box, padding and border are added on top of the 300px content width." onclick="answer(this)"><span class="quiz-radio"></span> 300px</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-html3-1" data-exp="You need to add padding on both sides (20+20=40) and border on both sides (1+1=2): 300+40+2=342." onclick="answer(this)"><span class="quiz-radio"></span> 320px</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-html3-1" data-exp="Correct. content-box: width(300) + padding-left(20) + padding-right(20) + border-left(1) + border-right(1) = 342px." onclick="answer(this)"><span class="quiz-radio"></span> 342px</div>
   </div>
   <div class="quiz-exp" id="q-html3-1-exp"></div>
 </div>
 <div class="quiz-item" id="q-html3-2">
   <div class="quiz-q">What is the practical difference between padding and margin?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,true,'q-html3-2','Correct. Padding is inside — it affects the element\'s background color and clickable area. Margin is outside — it\'s transparent and pushes neighboring elements away.')"><span class="quiz-radio"></span> Padding is inside the border (affects background/click area); margin is outside (transparent space between elements)</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-html3-2','It\'s the opposite: margin is outside.')"><span class="quiz-radio"></span> Margin is inside the border; padding is outside</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-html3-2','Both add spacing, but in different places relative to the border.')"><span class="quiz-radio"></span> They\'re the same — both add space around content</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-html3-2" data-exp="Correct. Padding is inside — it affects the element's background color and clickable area. Margin is outside — it's transparent and pushes neighboring elements away." onclick="answer(this)"><span class="quiz-radio"></span> Padding is inside the border (affects background/click area); margin is outside (transparent space between elements)</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-html3-2" data-exp="It's the opposite: margin is outside." onclick="answer(this)"><span class="quiz-radio"></span> Margin is inside the border; padding is outside</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-html3-2" data-exp="Both add spacing, but in different places relative to the border." onclick="answer(this)"><span class="quiz-radio"></span> They&#39;re the same — both add space around content</div>
   </div>
   <div class="quiz-exp" id="q-html3-2-exp"></div>
 </div>
 <button class="btn btn-next" onclick="markLessonDone('html3')">Complete Lesson → Next</button>
-`});
 
-registerLesson({ id:'html4', modId:'html', num:4, title:'Layout: Flexbox', html:`
+</template>
+
+<template id="tpl-html4">
+
 <div class="lesson-eyebrow">
   <span class="lesson-mod-tag" style="background:rgba(224,92,120,0.15);color:#e05c78">HTML &amp; CSS</span>
   <span class="lesson-num">Lesson 4 of 6</span>
@@ -960,25 +971,27 @@ registerLesson({ id:'html4', modId:'html', num:4, title:'Layout: Flexbox', html:
 <div class="quiz-item" id="q-html4-1">
   <div class="quiz-q">In a flex row, what does <code>align-items: center</code> do?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-html4-1','Horizontal centering in a row is justify-content: center. align-items operates on the cross axis, which is vertical for a row.')"><span class="quiz-radio"></span> Centers items horizontally in the row</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-html4-1','Correct. In a row, the main axis is horizontal and the cross axis is vertical. align-items: center vertically centers all children within the container\'s height.')"><span class="quiz-radio"></span> Centers items vertically within the container height</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-html4-1','flex: 1 makes items grow. align-items controls position, not size.')"><span class="quiz-radio"></span> Makes all items the same width</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-html4-1" data-exp="Horizontal centering in a row is justify-content: center. align-items operates on the cross axis, which is vertical for a row." onclick="answer(this)"><span class="quiz-radio"></span> Centers items horizontally in the row</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-html4-1" data-exp="Correct. In a row, the main axis is horizontal and the cross axis is vertical. align-items: center vertically centers all children within the container's height." onclick="answer(this)"><span class="quiz-radio"></span> Centers items vertically within the container height</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-html4-1" data-exp="flex: 1 makes items grow. align-items controls position, not size." onclick="answer(this)"><span class="quiz-radio"></span> Makes all items the same width</div>
   </div>
   <div class="quiz-exp" id="q-html4-1-exp"></div>
 </div>
 <div class="quiz-item" id="q-html4-2">
   <div class="quiz-q">What does <code>flex: 1</code> on a child element do?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-html4-2','flex: 1 is about growing into available space, not ordering.')"><span class="quiz-radio"></span> Makes the item appear first in the container</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-html4-2','Correct. flex: 1 is shorthand for flex-grow: 1 — the item will expand to fill all remaining space after fixed-size siblings are laid out.')"><span class="quiz-radio"></span> Tells the item to grow and fill all remaining available space</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-html4-2','flex: 1 is a layout property, not a font property.')"><span class="quiz-radio"></span> Sets the font size to 1rem</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-html4-2" data-exp="flex: 1 is about growing into available space, not ordering." onclick="answer(this)"><span class="quiz-radio"></span> Makes the item appear first in the container</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-html4-2" data-exp="Correct. flex: 1 is shorthand for flex-grow: 1 — the item will expand to fill all remaining space after fixed-size siblings are laid out." onclick="answer(this)"><span class="quiz-radio"></span> Tells the item to grow and fill all remaining available space</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-html4-2" data-exp="flex: 1 is a layout property, not a font property." onclick="answer(this)"><span class="quiz-radio"></span> Sets the font size to 1rem</div>
   </div>
   <div class="quiz-exp" id="q-html4-2-exp"></div>
 </div>
 <button class="btn btn-next" onclick="markLessonDone('html4')">Complete Lesson → Next</button>
-`});
 
-registerLesson({ id:'html5', modId:'html', num:5, title:'Layout: CSS Grid', html:`
+</template>
+
+<template id="tpl-html5">
+
 <div class="lesson-eyebrow">
   <span class="lesson-mod-tag" style="background:rgba(224,92,120,0.15);color:#e05c78">HTML &amp; CSS</span>
   <span class="lesson-num">Lesson 5 of 6</span>
@@ -1051,25 +1064,27 @@ registerLesson({ id:'html5', modId:'html', num:5, title:'Layout: CSS Grid', html
 <div class="quiz-item" id="q-html5-1">
   <div class="quiz-q">What does <code>repeat(auto-fill, minmax(200px, 1fr))</code> produce?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-html5-1','It\'s not fixed — auto-fill calculates the count based on the container width.')"><span class="quiz-radio"></span> Always exactly 3 columns, each 200px wide</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-html5-1','Correct. auto-fill packs as many columns as fit. minmax(200px, 1fr) means each column is at minimum 200px, but grows to share remaining space equally.')"><span class="quiz-radio"></span> As many 200px+ columns as fit, each growing equally to fill the row</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-html5-1','fr units are fractional — they grow. 200px is the minimum, not an override.')"><span class="quiz-radio"></span> Columns of exactly 1fr width, ignoring the 200px</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-html5-1" data-exp="It's not fixed — auto-fill calculates the count based on the container width." onclick="answer(this)"><span class="quiz-radio"></span> Always exactly 3 columns, each 200px wide</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-html5-1" data-exp="Correct. auto-fill packs as many columns as fit. minmax(200px, 1fr) means each column is at minimum 200px, but grows to share remaining space equally." onclick="answer(this)"><span class="quiz-radio"></span> As many 200px+ columns as fit, each growing equally to fill the row</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-html5-1" data-exp="fr units are fractional — they grow. 200px is the minimum, not an override." onclick="answer(this)"><span class="quiz-radio"></span> Columns of exactly 1fr width, ignoring the 200px</div>
   </div>
   <div class="quiz-exp" id="q-html5-1-exp"></div>
 </div>
 <div class="quiz-item" id="q-html5-2">
   <div class="quiz-q">When should you use Grid instead of Flexbox?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-html5-2','Both are fully modern and supported. The choice is about the layout problem, not browser support.')"><span class="quiz-radio"></span> Grid is older and less supported — prefer Flexbox</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-html5-2','Correct. Flexbox is one-dimensional — great for a toolbar (row) or a stacked menu (column). Grid is two-dimensional — use it when you need to control placement in both rows and columns simultaneously.')"><span class="quiz-radio"></span> When you need to control layout in two dimensions (rows AND columns) at the same time</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-html5-2','You can use Grid for nav bars and Flexbox for image galleries. The choice is about dimension, not element type.')"><span class="quiz-radio"></span> Grid is only for image galleries; Flexbox is for everything else</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-html5-2" data-exp="Both are fully modern and supported. The choice is about the layout problem, not browser support." onclick="answer(this)"><span class="quiz-radio"></span> Grid is older and less supported — prefer Flexbox</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-html5-2" data-exp="Correct. Flexbox is one-dimensional — great for a toolbar (row) or a stacked menu (column). Grid is two-dimensional — use it when you need to control placement in both rows and columns simultaneously." onclick="answer(this)"><span class="quiz-radio"></span> When you need to control layout in two dimensions (rows AND columns) at the same time</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-html5-2" data-exp="You can use Grid for nav bars and Flexbox for image galleries. The choice is about dimension, not element type." onclick="answer(this)"><span class="quiz-radio"></span> Grid is only for image galleries; Flexbox is for everything else</div>
   </div>
   <div class="quiz-exp" id="q-html5-2-exp"></div>
 </div>
 <button class="btn btn-next" onclick="markLessonDone('html5')">Complete Lesson → Next</button>
-`});
 
-registerLesson({ id:'html6', modId:'html', num:6, title:'CSS Variables, Media Queries & Transitions', html:`
+</template>
+
+<template id="tpl-html6">
+
 <div class="lesson-eyebrow">
   <span class="lesson-mod-tag" style="background:rgba(224,92,120,0.15);color:#e05c78">HTML &amp; CSS</span>
   <span class="lesson-num">Lesson 6 of 6</span>
@@ -1166,24 +1181,25 @@ registerLesson({ id:'html6', modId:'html', num:6, title:'CSS Variables, Media Qu
 <div class="quiz-item" id="q-html6-1">
   <div class="quiz-q">Why define colors as CSS variables in <code>:root</code> instead of writing the hex value directly everywhere?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-html6-1','CSS variables don\'t measurably affect page rendering performance.')"><span class="quiz-radio"></span> It makes the page render faster</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-html6-1','Correct. One variable means one place to change. Without variables, changing a brand color requires finding and updating dozens of individual declarations scattered through the file.')"><span class="quiz-radio"></span> Changing the value in one place automatically updates it everywhere it\'s referenced</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-html6-1','CSS variables are standard CSS — no browser compatibility issue.')"><span class="quiz-radio"></span> It\'s required for cross-browser compatibility</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-html6-1" data-exp="CSS variables don't measurably affect page rendering performance." onclick="answer(this)"><span class="quiz-radio"></span> It makes the page render faster</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-html6-1" data-exp="Correct. One variable means one place to change. Without variables, changing a brand color requires finding and updating dozens of individual declarations scattered through the file." onclick="answer(this)"><span class="quiz-radio"></span> Changing the value in one place automatically updates it everywhere it&#39;s referenced</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-html6-1" data-exp="CSS variables are standard CSS — no browser compatibility issue." onclick="answer(this)"><span class="quiz-radio"></span> It&#39;s required for cross-browser compatibility</div>
   </div>
   <div class="quiz-exp" id="q-html6-1-exp"></div>
 </div>
 <div class="quiz-item" id="q-html6-2">
   <div class="quiz-q">Why should <code>transition</code> be set on the base element rule rather than only on the <code>:hover</code> rule?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-html6-2','Putting transition on :hover only animates the entry into hover, not the exit back to normal.')"><span class="quiz-radio"></span> It doesn\'t matter — the effect is the same either way</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-html6-2','Correct. The transition property animates changes TO that element. If it\'s on the base rule, both entering hover (going to :hover values) and leaving hover (returning to base values) are animated. On :hover only, the exit is instant.')"><span class="quiz-radio"></span> So the transition plays in both directions — entering and leaving the hover state</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-html6-2','It\'s about directionality of animation, not browser compatibility.')"><span class="quiz-radio"></span> Because older browsers don\'t support transitions on pseudo-classes</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-html6-2" data-exp="Putting transition on :hover only animates the entry into hover, not the exit back to normal." onclick="answer(this)"><span class="quiz-radio"></span> It doesn&#39;t matter — the effect is the same either way</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-html6-2" data-exp="Correct. The transition property animates changes TO that element. If it's on the base rule, both entering hover (going to :hover values) and leaving hover (returning to base values) are animated. On :hover only, the exit is instant." onclick="answer(this)"><span class="quiz-radio"></span> So the transition plays in both directions — entering and leaving the hover state</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-html6-2" data-exp="It's about directionality of animation, not browser compatibility." onclick="answer(this)"><span class="quiz-radio"></span> Because older browsers don&#39;t support transitions on pseudo-classes</div>
   </div>
   <div class="quiz-exp" id="q-html6-2-exp"></div>
 </div>
 <button class="btn btn-next" onclick="markLessonDone('html6')">Complete Module 01 → Module 02 coming next</button>
-`});
-</script>
+
+</template>
+
 <script>
 registerModule({ id:'js', label:'02 — JavaScript', color:'#f0a429' });
 registerLesson({ id:'js1', modId:'js', num:1, title:'Variables, Types & Operators', templateId:'tpl-js1' });
@@ -1194,10 +1210,6 @@ registerLesson({ id:'js5', modId:'js', num:5, title:'The DOM: Selecting, Reading
 registerLesson({ id:'js6', modId:'js', num:6, title:'Async JavaScript: Promises & async/await', templateId:'tpl-js6' });
 registerLesson({ id:'js7', modId:'js', num:7, title:'The Fetch API & Working with JSON', templateId:'tpl-js7' });
 </script>
-
-<!-- ═══════════════════════════════════════════════ -->
-<!-- MODULE 02 LESSON TEMPLATES                      -->
-<!-- ═══════════════════════════════════════════════ -->
 
 <template id="tpl-js1">
 <div class="lesson-eyebrow">
@@ -1307,18 +1319,18 @@ registerLesson({ id:'js7', modId:'js', num:7, title:'The Fetch API & Working wit
 <div class="quiz-item" id="q-js1-1">
   <div class="quiz-q">When should you use <code>let</code> instead of <code>const</code>?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-js1-1','let works fine for primitives too. The choice is about reassignment, not value type.')"><span class="quiz-radio"></span> When the variable holds a primitive like a number or string</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-js1-1','Correct. const means the binding won\'t change. If you write currentPage = 2 later, use let. Otherwise use const — even for arrays and objects.')"><span class="quiz-radio"></span> When the variable will be reassigned to a different value later</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-js1-1','const doesn\'t freeze an array\'s contents — you can still push() to a const array. const just prevents reassigning the variable itself.')"><span class="quiz-radio"></span> When the variable holds an array or object, since their contents change</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-js1-1" data-exp="let works fine for primitives too. The choice is about reassignment, not value type." onclick="answer(this)"><span class="quiz-radio"></span> When the variable holds a primitive like a number or string</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-js1-1" data-exp="Correct. const means the binding won't change. If you write currentPage = 2 later, use let. Otherwise use const — even for arrays and objects." onclick="answer(this)"><span class="quiz-radio"></span> When the variable will be reassigned to a different value later</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-js1-1" data-exp="const doesn't freeze an array's contents — you can still push() to a const array. const just prevents reassigning the variable itself." onclick="answer(this)"><span class="quiz-radio"></span> When the variable holds an array or object, since their contents change</div>
   </div>
   <div class="quiz-exp" id="q-js1-1-exp"></div>
 </div>
 <div class="quiz-item" id="q-js1-2">
   <div class="quiz-q">What is the output of <code>"5" == 5</code> vs <code>"5" === 5</code>?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-js1-2','Both false would be the result if === applied to both. == does type coercion making &quot;5&quot; == 5 true.')"><span class="quiz-radio"></span> false, false</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-js1-2','Correct. == coerces the string &quot;5&quot; to number 5, so it\'s true. === checks type too — string !== number, so false.')"><span class="quiz-radio"></span> true, false</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-js1-2','=== never coerces types — a string and a number are never strictly equal.')"><span class="quiz-radio"></span> true, true</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-js1-2" data-exp="Both false would be the result if === applied to both. == does type coercion making &quot;5&quot; == 5 true." onclick="answer(this)"><span class="quiz-radio"></span> false, false</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-js1-2" data-exp="Correct. == coerces the string &quot;5&quot; to number 5, so it's true. === checks type too — string !== number, so false." onclick="answer(this)"><span class="quiz-radio"></span> true, false</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-js1-2" data-exp="=== never coerces types — a string and a number are never strictly equal." onclick="answer(this)"><span class="quiz-radio"></span> true, true</div>
   </div>
   <div class="quiz-exp" id="q-js1-2-exp"></div>
 </div>
@@ -1404,18 +1416,18 @@ registerLesson({ id:'js7', modId:'js', num:7, title:'The Fetch API & Working wit
 <div class="quiz-item" id="q-js2-1">
   <div class="quiz-q">What does <code>const prices = items.map(item => item.price * 0.9)</code> produce?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,true,'q-js2-1','Correct. map() returns a new array by running the arrow function on each element. The implicit return (no braces) returns item.price * 0.9 for each item.')"><span class="quiz-radio"></span> A new array with each item price reduced by 10%</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-js2-1','map() never modifies the original array — it always returns a new one.')"><span class="quiz-radio"></span> Modifies items in place, reducing each price</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-js2-1','map() runs on every element, not just the first.')"><span class="quiz-radio"></span> Returns only the first item price reduced by 10%</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-js2-1" data-exp="Correct. map() returns a new array by running the arrow function on each element. The implicit return (no braces) returns item.price * 0.9 for each item." onclick="answer(this)"><span class="quiz-radio"></span> A new array with each item price reduced by 10%</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-js2-1" data-exp="map() never modifies the original array — it always returns a new one." onclick="answer(this)"><span class="quiz-radio"></span> Modifies items in place, reducing each price</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-js2-1" data-exp="map() runs on every element, not just the first." onclick="answer(this)"><span class="quiz-radio"></span> Returns only the first item price reduced by 10%</div>
   </div>
   <div class="quiz-exp" id="q-js2-1-exp"></div>
 </div>
 <div class="quiz-item" id="q-js2-2">
   <div class="quiz-q">Can a function declaration be called before it appears in the file?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,true,'q-js2-2','Correct. Function declarations are hoisted — the JS engine moves them to the top before execution, so they\'re available anywhere in their scope. Arrow functions assigned to const are not hoisted.')"><span class="quiz-radio"></span> Yes — function declarations are hoisted to the top of their scope</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-js2-2','Function declarations specifically ARE hoisted. Arrow functions and function expressions are not.')"><span class="quiz-radio"></span> No — all functions must appear before they are called</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-js2-2','Hoisting is about parse-time processing, not file loading order.')"><span class="quiz-radio"></span> Only if the file is loaded asynchronously</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-js2-2" data-exp="Correct. Function declarations are hoisted — the JS engine moves them to the top before execution, so they're available anywhere in their scope. Arrow functions assigned to const are not hoisted." onclick="answer(this)"><span class="quiz-radio"></span> Yes — function declarations are hoisted to the top of their scope</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-js2-2" data-exp="Function declarations specifically ARE hoisted. Arrow functions and function expressions are not." onclick="answer(this)"><span class="quiz-radio"></span> No — all functions must appear before they are called</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-js2-2" data-exp="Hoisting is about parse-time processing, not file loading order." onclick="answer(this)"><span class="quiz-radio"></span> Only if the file is loaded asynchronously</div>
   </div>
   <div class="quiz-exp" id="q-js2-2-exp"></div>
 </div>
@@ -1512,18 +1524,18 @@ registerLesson({ id:'js7', modId:'js', num:7, title:'The Fetch API & Working wit
 <div class="quiz-item" id="q-js3-1">
   <div class="quiz-q">What does <code>const { name, ...rest } = user</code> produce?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-js3-1','Spread in destructuring collects remaining properties — it doesn\'t copy the whole object.')"><span class="quiz-radio"></span> A full copy of user called rest, plus a name variable</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-js3-1','Correct. name gets the name property. rest is a new object containing all other properties — everything except name.')"><span class="quiz-radio"></span> name gets the name property; rest gets all other properties as an object</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-js3-1','...rest in object destructuring collects into an object, not an array.')"><span class="quiz-radio"></span> Creates an array called rest with all user properties</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-js3-1" data-exp="Spread in destructuring collects remaining properties — it doesn't copy the whole object." onclick="answer(this)"><span class="quiz-radio"></span> A full copy of user called rest, plus a name variable</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-js3-1" data-exp="Correct. name gets the name property. rest is a new object containing all other properties — everything except name." onclick="answer(this)"><span class="quiz-radio"></span> name gets the name property; rest gets all other properties as an object</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-js3-1" data-exp="...rest in object destructuring collects into an object, not an array." onclick="answer(this)"><span class="quiz-radio"></span> Creates an array called rest with all user properties</div>
   </div>
   <div class="quiz-exp" id="q-js3-1-exp"></div>
 </div>
 <div class="quiz-item" id="q-js3-2">
   <div class="quiz-q">What does <code>const updated = { ...config, theme: "light" }</code> do?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-js3-2','Spread always creates a new object — the original config is never modified.')"><span class="quiz-radio"></span> Modifies config in place, changing its theme to "light"</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-js3-2','Correct. Object spread copies all of config\'s properties into a new object, then theme: "light" overrides any existing theme. config is unchanged.')"><span class="quiz-radio"></span> Creates a new object with all config properties, with theme overridden to "light"</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-js3-2','The spread includes all config properties — nothing is discarded.')"><span class="quiz-radio"></span> Creates a new object with only theme: "light", discarding config</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-js3-2" data-exp="Spread always creates a new object — the original config is never modified." onclick="answer(this)"><span class="quiz-radio"></span> Modifies config in place, changing its theme to "light"</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-js3-2" data-exp="Correct. Object spread copies all of config&#39;s properties into a new object, then theme: &quot;light&quot; overrides any existing theme. config is unchanged." onclick="answer(this)"><span class="quiz-radio"></span> Creates a new object with all config properties, with theme overridden to "light"</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-js3-2" data-exp="The spread includes all config properties — nothing is discarded." onclick="answer(this)"><span class="quiz-radio"></span> Creates a new object with only theme: "light", discarding config</div>
   </div>
   <div class="quiz-exp" id="q-js3-2-exp"></div>
 </div>
@@ -1616,18 +1628,18 @@ registerLesson({ id:'js7', modId:'js', num:7, title:'The Fetch API & Working wit
 <div class="quiz-item" id="q-js4-1">
   <div class="quiz-q">What is the key difference between <code>.map()</code> and <code>.forEach()</code>?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,true,'q-js4-1','Correct. map() returns a new transformed array. forEach() returns undefined — use it only for side effects like logging or DOM updates.')"><span class="quiz-radio"></span> map() returns a new transformed array; forEach() returns nothing</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-js4-1','There\'s no meaningful performance difference between them.')"><span class="quiz-radio"></span> forEach() is faster — prefer it over map()</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-js4-1','Both accept a callback function.')"><span class="quiz-radio"></span> map() takes a callback; forEach() does not</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-js4-1" data-exp="Correct. map() returns a new transformed array. forEach() returns undefined — use it only for side effects like logging or DOM updates." onclick="answer(this)"><span class="quiz-radio"></span> map() returns a new transformed array; forEach() returns nothing</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-js4-1" data-exp="There's no meaningful performance difference between them." onclick="answer(this)"><span class="quiz-radio"></span> forEach() is faster — prefer it over map()</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-js4-1" data-exp="Both accept a callback function." onclick="answer(this)"><span class="quiz-radio"></span> map() takes a callback; forEach() does not</div>
   </div>
   <div class="quiz-exp" id="q-js4-1-exp"></div>
 </div>
 <div class="quiz-item" id="q-js4-2">
   <div class="quiz-q">What does <code>results && renderGrid(results)</code> do?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-js4-2','It doesn\'t always return a boolean — && returns the actual right-side value if both sides are truthy.')"><span class="quiz-radio"></span> Always returns true or false</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-js4-2','Correct. The && short-circuit only evaluates the right side if the left is truthy. If results is null or undefined, renderGrid never runs.')"><span class="quiz-radio"></span> Only calls renderGrid if results is truthy; otherwise does nothing</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-js4-2','&& doesn\'t modify results — it controls whether the right side runs.')"><span class="quiz-radio"></span> Checks results, then replaces it with renderGrid\'s return value</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-js4-2" data-exp="It doesn't always return a boolean — && returns the actual right-side value if both sides are truthy." onclick="answer(this)"><span class="quiz-radio"></span> Always returns true or false</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-js4-2" data-exp="Correct. The && short-circuit only evaluates the right side if the left is truthy. If results is null or undefined, renderGrid never runs." onclick="answer(this)"><span class="quiz-radio"></span> Only calls renderGrid if results is truthy; otherwise does nothing</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-js4-2" data-exp="&& doesn't modify results — it controls whether the right side runs." onclick="answer(this)"><span class="quiz-radio"></span> Checks results, then replaces it with renderGrid&#39;s return value</div>
   </div>
   <div class="quiz-exp" id="q-js4-2-exp"></div>
 </div>
@@ -1725,18 +1737,18 @@ registerLesson({ id:'js7', modId:'js', num:7, title:'The Fetch API & Working wit
 <div class="quiz-item" id="q-js5-1">
   <div class="quiz-q">What is the difference between <code>querySelector</code> and <code>querySelectorAll</code>?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,true,'q-js5-1','Correct. querySelector returns the first matching element or null. querySelectorAll returns a NodeList of all matches, which you iterate but is not an Array.')"><span class="quiz-radio"></span> querySelector returns the first match; querySelectorAll returns all matches as a NodeList</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-js5-1','Both accept any CSS selector syntax.')"><span class="quiz-radio"></span> querySelector uses IDs; querySelectorAll uses classes</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-js5-1','Both search the full document by default.')"><span class="quiz-radio"></span> querySelector only searches within the current element</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-js5-1" data-exp="Correct. querySelector returns the first matching element or null. querySelectorAll returns a NodeList of all matches, which you iterate but is not an Array." onclick="answer(this)"><span class="quiz-radio"></span> querySelector returns the first match; querySelectorAll returns all matches as a NodeList</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-js5-1" data-exp="Both accept any CSS selector syntax." onclick="answer(this)"><span class="quiz-radio"></span> querySelector uses IDs; querySelectorAll uses classes</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-js5-1" data-exp="Both search the full document by default." onclick="answer(this)"><span class="quiz-radio"></span> querySelector only searches within the current element</div>
   </div>
   <div class="quiz-exp" id="q-js5-1-exp"></div>
 </div>
 <div class="quiz-item" id="q-js5-2">
   <div class="quiz-q">What does <code>element.classList.toggle("open")</code> do?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-js5-2','toggle checks class presence, not visibility.')"><span class="quiz-radio"></span> Adds "open" only if the element is currently visible</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-js5-2','Correct. toggle is like a switch — adds "open" if absent, removes it if present. Perfect for menus and accordions.')"><span class="quiz-radio"></span> Adds "open" if absent; removes it if present</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-js5-2','That would be classList.add().')"><span class="quiz-radio"></span> Always adds "open" to the class list</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-js5-2" data-exp="toggle checks class presence, not visibility." onclick="answer(this)"><span class="quiz-radio"></span> Adds "open" only if the element is currently visible</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-js5-2" data-exp="Correct. toggle is like a switch — adds &quot;open&quot; if absent, removes it if present. Perfect for menus and accordions." onclick="answer(this)"><span class="quiz-radio"></span> Adds "open" if absent; removes it if present</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-js5-2" data-exp="That would be classList.add()." onclick="answer(this)"><span class="quiz-radio"></span> Always adds "open" to the class list</div>
   </div>
   <div class="quiz-exp" id="q-js5-2-exp"></div>
 </div>
@@ -1830,18 +1842,18 @@ registerLesson({ id:'js7', modId:'js', num:7, title:'The Fetch API & Working wit
 <div class="quiz-item" id="q-js6-1">
   <div class="quiz-q">Why must a function be declared <code>async</code> before using <code>await</code> inside it?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-js6-1','It\'s not about the return type — it\'s about the execution context await requires.')"><span class="quiz-radio"></span> Because async functions always return a string</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-js6-1','Correct. async tells JavaScript this function returns a Promise and can suspend execution. Without it, await is a syntax error.')"><span class="quiz-radio"></span> Because await can only pause inside an async function — async sets up the required context</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-js6-1','async has nothing to do with variable scope.')"><span class="quiz-radio"></span> Because it creates a new variable scope for async operations</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-js6-1" data-exp="It's not about the return type — it's about the execution context await requires." onclick="answer(this)"><span class="quiz-radio"></span> Because async functions always return a string</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-js6-1" data-exp="Correct. async tells JavaScript this function returns a Promise and can suspend execution. Without it, await is a syntax error." onclick="answer(this)"><span class="quiz-radio"></span> Because await can only pause inside an async function — async sets up the required context</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-js6-1" data-exp="async has nothing to do with variable scope." onclick="answer(this)"><span class="quiz-radio"></span> Because it creates a new variable scope for async operations</div>
   </div>
   <div class="quiz-exp" id="q-js6-1-exp"></div>
 </div>
 <div class="quiz-item" id="q-js6-2">
   <div class="quiz-q">What is the difference between <code>Promise.all</code> and <code>Promise.allSettled</code>?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-js6-2','Both run in parallel — the difference is how they handle failures.')"><span class="quiz-radio"></span> all runs in parallel; allSettled runs in sequence</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-js6-2','Correct. Promise.all rejects immediately if any promise fails. allSettled waits for all, giving each result a status of "fulfilled" or "rejected" so partial failures don\'t kill everything.')"><span class="quiz-radio"></span> all rejects if any promise fails; allSettled waits for all and gives each a fulfilled/rejected status</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-js6-2','Both handle arrays of promises.')"><span class="quiz-radio"></span> all is for arrays; allSettled is for single promises</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-js6-2" data-exp="Both run in parallel — the difference is how they handle failures." onclick="answer(this)"><span class="quiz-radio"></span> all runs in parallel; allSettled runs in sequence</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-js6-2" data-exp="Correct. Promise.all rejects immediately if any promise fails. allSettled waits for all, giving each result a status of &quot;fulfilled&quot; or &quot;rejected&quot; so partial failures don&#39;t kill everything." onclick="answer(this)"><span class="quiz-radio"></span> all rejects if any promise fails; allSettled waits for all and gives each a fulfilled/rejected status</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-js6-2" data-exp="Both handle arrays of promises." onclick="answer(this)"><span class="quiz-radio"></span> all is for arrays; allSettled is for single promises</div>
   </div>
   <div class="quiz-exp" id="q-js6-2-exp"></div>
 </div>
@@ -1927,23 +1939,24 @@ registerLesson({ id:'js7', modId:'js', num:7, title:'The Fetch API & Working wit
 <div class="quiz-item" id="q-js7-1">
   <div class="quiz-q">Why are there two <code>await</code> calls in a typical fetch — one for <code>fetch()</code> and one for <code>.json()</code>?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-js7-1','No security check involved — it\'s about the two-stage response arrival.')"><span class="quiz-radio"></span> The first await is a security check; the second decodes the data</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-js7-1','Correct. fetch() resolves when headers arrive. The body streams separately — .json() reads and parses it, which is also async and needs its own await.')"><span class="quiz-radio"></span> fetch() resolves when headers arrive; .json() separately reads and parses the body stream, which is also async</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-js7-1','.json() is genuinely async because it reads a body stream — one await is not enough.')"><span class="quiz-radio"></span> It\'s just convention — one await would work fine</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-js7-1" data-exp="No security check involved — it's about the two-stage response arrival." onclick="answer(this)"><span class="quiz-radio"></span> The first await is a security check; the second decodes the data</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-js7-1" data-exp="Correct. fetch() resolves when headers arrive. The body streams separately — .json() reads and parses it, which is also async and needs its own await." onclick="answer(this)"><span class="quiz-radio"></span> fetch() resolves when headers arrive; .json() separately reads and parses the body stream, which is also async</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-js7-1" data-exp=".json() is genuinely async because it reads a body stream — one await is not enough." onclick="answer(this)"><span class="quiz-radio"></span> It&#39;s just convention — one await would work fine</div>
   </div>
   <div class="quiz-exp" id="q-js7-1-exp"></div>
 </div>
 <div class="quiz-item" id="q-js7-2">
   <div class="quiz-q">Claude's fetch function doesn't throw on a 404. What check should you ask it to add?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-js7-2','response.ok is cleaner — it covers the full 200-299 success range.')"><span class="quiz-radio"></span> Check if response.status === 200</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-js7-2','Correct. fetch() only rejects on network failure — a 404 or 500 still "succeeds" as a Promise. You must check if (!response.ok) and throw manually.')"><span class="quiz-radio"></span> Check if (!response.ok) and throw an error with the status code</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-js7-2','try/catch catches thrown errors, but fetch doesn\'t throw on 404 — you need the !response.ok check first.')"><span class="quiz-radio"></span> Wrap the fetch in try/catch</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-js7-2" data-exp="response.ok is cleaner — it covers the full 200-299 success range." onclick="answer(this)"><span class="quiz-radio"></span> Check if response.status === 200</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-js7-2" data-exp="Correct. fetch() only rejects on network failure — a 404 or 500 still &quot;succeeds&quot; as a Promise. You must check if (!response.ok) and throw manually." onclick="answer(this)"><span class="quiz-radio"></span> Check if (!response.ok) and throw an error with the status code</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-js7-2" data-exp="try/catch catches thrown errors, but fetch doesn't throw on 404 — you need the !response.ok check first." onclick="answer(this)"><span class="quiz-radio"></span> Wrap the fetch in try/catch</div>
   </div>
   <div class="quiz-exp" id="q-js7-2-exp"></div>
 </div>
 <button class="btn btn-next" onclick="markLessonDone('js7')">Complete Module 02 → Module 03 coming next</button>
 </template>
+
 <script>
 registerModule({ id:'python', label:'03 — Python', color:'#36d9a0' });
 registerLesson({ id:'py1', modId:'python', num:1, title:'Syntax Fundamentals', templateId:'tpl-py1' });
@@ -1953,10 +1966,6 @@ registerLesson({ id:'py4', modId:'python', num:4, title:'Comprehensions & Contro
 registerLesson({ id:'py5', modId:'python', num:5, title:'Modules, Imports & Virtual Environments', templateId:'tpl-py5' });
 registerLesson({ id:'py6', modId:'python', num:6, title:'Flask & FastAPI Patterns', templateId:'tpl-py6' });
 </script>
-
-<!-- ═══════════════════════════════════════════════ -->
-<!-- MODULE 03 LESSON TEMPLATES                      -->
-<!-- ═══════════════════════════════════════════════ -->
 
 <template id="tpl-py1">
 <div class="lesson-eyebrow">
@@ -2049,18 +2058,18 @@ registerLesson({ id:'py6', modId:'python', num:6, title:'Flask & FastAPI Pattern
 <div class="quiz-item" id="q-py1-1">
   <div class="quiz-q">In Python, what happens if you indent a line incorrectly — say, with 3 spaces instead of 4?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-py1-1','Python doesn\'t warn — it crashes immediately with an IndentationError.')"><span class="quiz-radio"></span> Python runs the code but prints a warning</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-py1-1','Correct. In Python, indentation is syntax. Inconsistent indentation causes an IndentationError and the entire script refuses to run.')"><span class="quiz-radio"></span> The script throws an IndentationError and won\'t run at all</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-py1-1','Python doesn\'t ignore indentation — it defines block structure entirely through it.')"><span class="quiz-radio"></span> Python ignores whitespace differences and runs normally</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-py1-1" data-exp="Python doesn't warn — it crashes immediately with an IndentationError." onclick="answer(this)"><span class="quiz-radio"></span> Python runs the code but prints a warning</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-py1-1" data-exp="Correct. In Python, indentation is syntax. Inconsistent indentation causes an IndentationError and the entire script refuses to run." onclick="answer(this)"><span class="quiz-radio"></span> The script throws an IndentationError and won&#39;t run at all</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-py1-1" data-exp="Python doesn't ignore indentation — it defines block structure entirely through it." onclick="answer(this)"><span class="quiz-radio"></span> Python ignores whitespace differences and runs normally</div>
   </div>
   <div class="quiz-exp" id="q-py1-1-exp"></div>
 </div>
 <div class="quiz-item" id="q-py1-2">
   <div class="quiz-q">What is the Python equivalent of JavaScript's <code>null</code>?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-py1-2','False is a boolean in Python, not an absence-of-value sentinel.')"><span class="quiz-radio"></span> False</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-py1-2','undefined is a JavaScript concept — Python has no equivalent.')"><span class="quiz-radio"></span> undefined</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-py1-2','Correct. None is Python\'s null equivalent — intentional absence of a value. Note the capital N.')"><span class="quiz-radio"></span> None</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-py1-2" data-exp="False is a boolean in Python, not an absence-of-value sentinel." onclick="answer(this)"><span class="quiz-radio"></span> False</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-py1-2" data-exp="undefined is a JavaScript concept — Python has no equivalent." onclick="answer(this)"><span class="quiz-radio"></span> undefined</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-py1-2" data-exp="Correct. None is Python's null equivalent — intentional absence of a value. Note the capital N." onclick="answer(this)"><span class="quiz-radio"></span> None</div>
   </div>
   <div class="quiz-exp" id="q-py1-2-exp"></div>
 </div>
@@ -2143,18 +2152,18 @@ registerLesson({ id:'py6', modId:'python', num:6, title:'Flask & FastAPI Pattern
 <div class="quiz-item" id="q-py2-1">
   <div class="quiz-q">What does <code>**kwargs</code> do in a Python function signature?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-py2-1','*args collects positional arguments into a tuple. **kwargs is specifically for keyword arguments.')"><span class="quiz-radio"></span> Collects extra positional arguments into a tuple</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-py2-1','Correct. **kwargs collects any keyword arguments passed to the function into a dictionary. If you call fn(text="hello", lang="en"), kwargs will be {"text": "hello", "lang": "en"}.')"><span class="quiz-radio"></span> Collects any extra keyword arguments (name=value pairs) into a dictionary</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-py2-1','** in a function signature is not exponentiation — it\'s a packing operator.')"><span class="quiz-radio"></span> Raises a parameter to a power</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-py2-1" data-exp="*args collects positional arguments into a tuple. **kwargs is specifically for keyword arguments." onclick="answer(this)"><span class="quiz-radio"></span> Collects extra positional arguments into a tuple</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-py2-1" data-exp="Correct. **kwargs collects any keyword arguments passed to the function into a dictionary. If you call fn(text=&quot;hello&quot;, lang=&quot;en&quot;), kwargs will be {&quot;text&quot;: &quot;hello&quot;, &quot;lang&quot;: &quot;en&quot;}." onclick="answer(this)"><span class="quiz-radio"></span> Collects any extra keyword arguments (name=value pairs) into a dictionary</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-py2-1" data-exp="** in a function signature is not exponentiation — it's a packing operator." onclick="answer(this)"><span class="quiz-radio"></span> Raises a parameter to a power</div>
   </div>
   <div class="quiz-exp" id="q-py2-1-exp"></div>
 </div>
 <div class="quiz-item" id="q-py2-2">
   <div class="quiz-q">Why can you call <code>schedule_post("Hello", account="alt", delay_minutes=60)</code> with arguments in a different order than the signature?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-py2-2','Python doesn\'t ignore order — it uses keyword argument names to match the right parameter.')"><span class="quiz-radio"></span> Python ignores argument order entirely</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-py2-2','Correct. When you name your arguments (account="alt"), Python matches by name rather than position, so order doesn\'t matter for named args.')"><span class="quiz-radio"></span> Named (keyword) arguments are matched by name, not position, so order doesn\'t matter for them</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-py2-2','Default values aren\'t what enables reordering — keyword argument syntax is.')"><span class="quiz-radio"></span> Because the parameters have default values</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-py2-2" data-exp="Python doesn't ignore order — it uses keyword argument names to match the right parameter." onclick="answer(this)"><span class="quiz-radio"></span> Python ignores argument order entirely</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-py2-2" data-exp="Correct. When you name your arguments (account=&quot;alt&quot;), Python matches by name rather than position, so order doesn&#39;t matter for named args." onclick="answer(this)"><span class="quiz-radio"></span> Named (keyword) arguments are matched by name, not position, so order doesn&#39;t matter for them</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-py2-2" data-exp="Default values aren't what enables reordering — keyword argument syntax is." onclick="answer(this)"><span class="quiz-radio"></span> Because the parameters have default values</div>
   </div>
   <div class="quiz-exp" id="q-py2-2-exp"></div>
 </div>
@@ -2239,18 +2248,18 @@ registerLesson({ id:'py6', modId:'python', num:6, title:'Flask & FastAPI Pattern
 <div class="quiz-item" id="q-py3-1">
   <div class="quiz-q">When would you use a set instead of a list?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-py3-1','Sets are unordered — they don\'t support indexing or preserve insertion order.')"><span class="quiz-radio"></span> When you need to access items by index</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-py3-1','Correct. Sets automatically discard duplicates and have very fast membership testing (checking "is X in here?"). Perfect for deduplication and lookups.')"><span class="quiz-radio"></span> When you need unique values and fast membership testing</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-py3-1','Sets are generally not faster for iteration — lists are fine for that.')"><span class="quiz-radio"></span> When you need to iterate faster</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-py3-1" data-exp="Sets are unordered — they don't support indexing or preserve insertion order." onclick="answer(this)"><span class="quiz-radio"></span> When you need to access items by index</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-py3-1" data-exp="Correct. Sets automatically discard duplicates and have very fast membership testing (checking &quot;is X in here?&quot;). Perfect for deduplication and lookups." onclick="answer(this)"><span class="quiz-radio"></span> When you need unique values and fast membership testing</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-py3-1" data-exp="Sets are generally not faster for iteration — lists are fine for that." onclick="answer(this)"><span class="quiz-radio"></span> When you need to iterate faster</div>
   </div>
   <div class="quiz-exp" id="q-py3-1-exp"></div>
 </div>
 <div class="quiz-item" id="q-py3-2">
   <div class="quiz-q">What is the safe way to access a dict key that might not exist?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-py3-2','dict["key"] raises a KeyError if the key is missing — not safe for optional keys.')"><span class="quiz-radio"></span> dict["key"] — direct bracket access</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-py3-2','Correct. .get(key, default) returns the default value (or None if no default given) instead of raising a KeyError when the key is absent.')"><span class="quiz-radio"></span> dict.get("key", default) — returns default if key is missing</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-py3-2','Python doesn\'t have optional chaining syntax like ?.key.')"><span class="quiz-radio"></span> dict?.key — optional chaining</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-py3-2" data-exp="dict[&quot;key&quot;] raises a KeyError if the key is missing — not safe for optional keys." onclick="answer(this)"><span class="quiz-radio"></span> dict["key"] — direct bracket access</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-py3-2" data-exp="Correct. .get(key, default) returns the default value (or None if no default given) instead of raising a KeyError when the key is absent." onclick="answer(this)"><span class="quiz-radio"></span> dict.get("key", default) — returns default if key is missing</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-py3-2" data-exp="Python doesn't have optional chaining syntax like ?.key." onclick="answer(this)"><span class="quiz-radio"></span> dict?.key — optional chaining</div>
   </div>
   <div class="quiz-exp" id="q-py3-2-exp"></div>
 </div>
@@ -2337,18 +2346,18 @@ posts = [
 <div class="quiz-item" id="q-py4-1">
   <div class="quiz-q">What does <code>[x * 2 for x in nums if x > 0]</code> produce?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-py4-1','It filters first — only positive numbers get doubled.')"><span class="quiz-radio"></span> A list of all numbers doubled</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-py4-1','Correct. The if x > 0 filters out non-positives, then x * 2 doubles each remaining value. Equivalent to filter then map in JavaScript.')"><span class="quiz-radio"></span> A list of only the positive numbers, each doubled</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-py4-1','It returns a new list, not a boolean.')"><span class="quiz-radio"></span> True or False depending on whether any number is positive</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-py4-1" data-exp="It filters first — only positive numbers get doubled." onclick="answer(this)"><span class="quiz-radio"></span> A list of all numbers doubled</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-py4-1" data-exp="Correct. The if x > 0 filters out non-positives, then x * 2 doubles each remaining value. Equivalent to filter then map in JavaScript." onclick="answer(this)"> 0 filters out non-positives, then x * 2 doubles each remaining value. Equivalent to filter then map in JavaScript.')"><span class="quiz-radio"></span> A list of only the positive numbers, each doubled</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-py4-1" data-exp="It returns a new list, not a boolean." onclick="answer(this)"><span class="quiz-radio"></span> True or False depending on whether any number is positive</div>
   </div>
   <div class="quiz-exp" id="q-py4-1-exp"></div>
 </div>
 <div class="quiz-item" id="q-py4-2">
   <div class="quiz-q">When does the <code>finally</code> block in a try/except/finally run?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-py4-2','finally runs in both cases — that\'s its entire purpose.')"><span class="quiz-radio"></span> Only when an exception is raised</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-py4-2','finally runs even when there is an exception.')"><span class="quiz-radio"></span> Only when no exception is raised</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-py4-2','Correct. finally always runs — whether the try block succeeded, raised an exception, or even hit a return statement. It\'s for guaranteed cleanup like closing files or database connections.')"><span class="quiz-radio"></span> Always — whether the try block succeeded or failed</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-py4-2" data-exp="finally runs in both cases — that's its entire purpose." onclick="answer(this)"><span class="quiz-radio"></span> Only when an exception is raised</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-py4-2" data-exp="finally runs even when there is an exception." onclick="answer(this)"><span class="quiz-radio"></span> Only when no exception is raised</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-py4-2" data-exp="Correct. finally always runs — whether the try block succeeded, raised an exception, or even hit a return statement. It's for guaranteed cleanup like closing files or database connections." onclick="answer(this)"><span class="quiz-radio"></span> Always — whether the try block succeeded or failed</div>
   </div>
   <div class="quiz-exp" id="q-py4-2-exp"></div>
 </div>
@@ -2442,18 +2451,18 @@ pip install flask
 <div class="quiz-item" id="q-py5-1">
   <div class="quiz-q">What is the difference between <code>import os</code> and <code>from os import path</code>?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,true,'q-py5-1','Correct. import os loads the whole module — you then access things as os.path, os.environ. from os import path brings only path into scope as a direct name, so you use path.join() instead of os.path.join().')"><span class="quiz-radio"></span> import os loads the whole module (access as os.path); from os import path brings only path into local scope (access as path)</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-py5-1','Both import from the same os module — just in different ways.')"><span class="quiz-radio"></span> They import from different locations</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-py5-1','from...import is not slower — the difference is scoping, not performance.')"><span class="quiz-radio"></span> import os is faster; from...import is for slow modules</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-py5-1" data-exp="Correct. import os loads the whole module — you then access things as os.path, os.environ. from os import path brings only path into scope as a direct name, so you use path.join() instead of os.path.join()." onclick="answer(this)"><span class="quiz-radio"></span> import os loads the whole module (access as os.path); from os import path brings only path into local scope (access as path)</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-py5-1" data-exp="Both import from the same os module — just in different ways." onclick="answer(this)"><span class="quiz-radio"></span> They import from different locations</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-py5-1" data-exp="from...import is not slower — the difference is scoping, not performance." onclick="answer(this)"><span class="quiz-radio"></span> import os is faster; from...import is for slow modules</div>
   </div>
   <div class="quiz-exp" id="q-py5-1-exp"></div>
 </div>
 <div class="quiz-item" id="q-py5-2">
   <div class="quiz-q">Why does pip install require <code>--break-system-packages</code> on Bazzite?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-py5-2','It\'s not about Python version — it\'s about Fedora Atomic\'s immutable base system.')"><span class="quiz-radio"></span> Because Bazzite uses an older version of Python</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-py5-2','Correct. Bazzite uses Fedora Atomic\'s immutable base filesystem. pip normally refuses to install into the system Python on such systems to prevent breaking the OS. The flag explicitly overrides that protection.')"><span class="quiz-radio"></span> Because Bazzite\'s Fedora Atomic base is immutable — pip refuses to install into the system Python without explicit permission</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-py5-2','The flag is about system Python protection, not package conflicts.')"><span class="quiz-radio"></span> To prevent version conflicts between packages</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-py5-2" data-exp="It's not about Python version — it's about Fedora Atomic's immutable base system." onclick="answer(this)"><span class="quiz-radio"></span> Because Bazzite uses an older version of Python</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-py5-2" data-exp="Correct. Bazzite uses Fedora Atomic's immutable base filesystem. pip normally refuses to install into the system Python on such systems to prevent breaking the OS. The flag explicitly overrides that protection." onclick="answer(this)"><span class="quiz-radio"></span> Because Bazzite&#39;s Fedora Atomic base is immutable — pip refuses to install into the system Python without explicit permission</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-py5-2" data-exp="The flag is about system Python protection, not package conflicts." onclick="answer(this)"><span class="quiz-radio"></span> To prevent version conflicts between packages</div>
   </div>
   <div class="quiz-exp" id="q-py5-2-exp"></div>
 </div>
@@ -2564,23 +2573,24 @@ app = <span class="cf">FastAPI</span>()
 <div class="quiz-item" id="q-py6-1">
   <div class="quiz-q">What does <code>@app.route("/schedule", methods=["POST"])</code> do in Flask?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-py6-1','It\'s a decorator, not a comment — it actively registers the function as a route handler.')"><span class="quiz-radio"></span> It\'s a comment that describes the function</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-py6-1','Correct. The @app.route decorator tells Flask: when a POST request arrives at /schedule, run the function defined immediately below it.')"><span class="quiz-radio"></span> It registers the function below it as the handler for POST requests to /schedule</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-py6-1','methods=["POST"] means only POST requests — GET would need methods=["GET"].')"><span class="quiz-radio"></span> It makes the route respond to both GET and POST requests</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-py6-1" data-exp="It's a decorator, not a comment — it actively registers the function as a route handler." onclick="answer(this)"><span class="quiz-radio"></span> It&#39;s a comment that describes the function</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-py6-1" data-exp="Correct. The @app.route decorator tells Flask: when a POST request arrives at /schedule, run the function defined immediately below it." onclick="answer(this)"><span class="quiz-radio"></span> It registers the function below it as the handler for POST requests to /schedule</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-py6-1" data-exp="methods=[&quot;POST&quot;] means only POST requests — GET would need methods=[&quot;GET&quot;]." onclick="answer(this)"><span class="quiz-radio"></span> It makes the route respond to both GET and POST requests</div>
   </div>
   <div class="quiz-exp" id="q-py6-1-exp"></div>
 </div>
 <div class="quiz-item" id="q-py6-2">
   <div class="quiz-q">What is the difference between Flask's <code>jsonify(data)</code> and Python's <code>json.dumps(data)</code>?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-py6-2','Both convert Python objects to JSON — the difference is what they return.')"><span class="quiz-radio"></span> They do the same thing</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-py6-2','Correct. json.dumps() returns a plain JSON string. jsonify() returns a Flask Response object with the correct Content-Type header set — ready to be returned directly from a route handler.')"><span class="quiz-radio"></span> jsonify() returns a Flask Response object with proper headers; json.dumps() returns a plain JSON string</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-py6-2','json.dumps() handles all standard Python types fine.')"><span class="quiz-radio"></span> jsonify() handles complex types; json.dumps() only handles strings</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-py6-2" data-exp="Both convert Python objects to JSON — the difference is what they return." onclick="answer(this)"><span class="quiz-radio"></span> They do the same thing</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-py6-2" data-exp="Correct. json.dumps() returns a plain JSON string. jsonify() returns a Flask Response object with the correct Content-Type header set — ready to be returned directly from a route handler." onclick="answer(this)"><span class="quiz-radio"></span> jsonify() returns a Flask Response object with proper headers; json.dumps() returns a plain JSON string</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-py6-2" data-exp="json.dumps() handles all standard Python types fine." onclick="answer(this)"><span class="quiz-radio"></span> jsonify() handles complex types; json.dumps() only handles strings</div>
   </div>
   <div class="quiz-exp" id="q-py6-2-exp"></div>
 </div>
 <button class="btn btn-next" onclick="markLessonDone('py6')">Complete Module 03 → Module 04 coming next</button>
 </template>
+
 <script>
 registerModule({ id:'bash', label:'04 — Bash & Shell', color:'#aa72f0' });
 registerLesson({ id:'sh1', modId:'bash', num:1, title:'Navigation & File Operations', templateId:'tpl-sh1' });
@@ -2589,10 +2599,6 @@ registerLesson({ id:'sh3', modId:'bash', num:3, title:'Pipes, Redirection & Chai
 registerLesson({ id:'sh4', modId:'bash', num:4, title:'Writing Scripts: Conditionals & Loops', templateId:'tpl-sh4' });
 registerLesson({ id:'sh5', modId:'bash', num:5, title:'Processes, Background Jobs & Cron', templateId:'tpl-sh5' });
 </script>
-
-<!-- ═══════════════════════════════════════════════ -->
-<!-- MODULE 04 LESSON TEMPLATES                      -->
-<!-- ═══════════════════════════════════════════════ -->
 
 <template id="tpl-sh1">
 <div class="lesson-eyebrow">
@@ -2690,18 +2696,18 @@ registerLesson({ id:'sh5', modId:'bash', num:5, title:'Processes, Background Job
 <div class="quiz-item" id="q-sh1-1">
   <div class="quiz-q">What does <code>mkdir -p logs/2026/april</code> do that plain <code>mkdir logs/2026/april</code> doesn't?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-sh1-1','-p doesn\'t affect permissions — it controls parent directory creation.')"><span class="quiz-radio"></span> Sets permissions on the new directory</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-sh1-1','Correct. Without -p, mkdir fails if any parent in the path doesn\'t exist, and also fails if the directory already exists. -p creates missing parents and silently succeeds if the directory is already there.')"><span class="quiz-radio"></span> Creates any missing parent directories and doesn\'t error if the directory already exists</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-sh1-1','mkdir -p creates all missing parents, not just one level.')"><span class="quiz-radio"></span> Creates only one level at a time</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-sh1-1" data-exp="-p doesn't affect permissions — it controls parent directory creation." onclick="answer(this)"><span class="quiz-radio"></span> Sets permissions on the new directory</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-sh1-1" data-exp="Correct. Without -p, mkdir fails if any parent in the path doesn't exist, and also fails if the directory already exists. -p creates missing parents and silently succeeds if the directory is already there." onclick="answer(this)"><span class="quiz-radio"></span> Creates any missing parent directories and doesn&#39;t error if the directory already exists</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-sh1-1" data-exp="mkdir -p creates all missing parents, not just one level." onclick="answer(this)"><span class="quiz-radio"></span> Creates only one level at a time</div>
   </div>
   <div class="quiz-exp" id="q-sh1-1-exp"></div>
 </div>
 <div class="quiz-item" id="q-sh1-2">
   <div class="quiz-q">What does <code>tail -f app.log</code> do?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-sh1-2','tail without -f just prints the last lines and exits.')"><span class="quiz-radio"></span> Prints the last 10 lines and exits</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-sh1-2','Correct. The -f flag means "follow" — tail keeps running and prints new lines as they are appended to the file. Essential for watching live application logs.')"><span class="quiz-radio"></span> Continuously prints new lines as they are added to the file — watches it in real-time</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-sh1-2','tail reads from the end of a file, not the beginning.')"><span class="quiz-radio"></span> Prints the first line of the file repeatedly</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-sh1-2" data-exp="tail without -f just prints the last lines and exits." onclick="answer(this)"><span class="quiz-radio"></span> Prints the last 10 lines and exits</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-sh1-2" data-exp="Correct. The -f flag means &quot;follow&quot; — tail keeps running and prints new lines as they are appended to the file. Essential for watching live application logs." onclick="answer(this)"><span class="quiz-radio"></span> Continuously prints new lines as they are added to the file — watches it in real-time</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-sh1-2" data-exp="tail reads from the end of a file, not the beginning." onclick="answer(this)"><span class="quiz-radio"></span> Prints the first line of the file repeatedly</div>
   </div>
   <div class="quiz-exp" id="q-sh1-2-exp"></div>
 </div>
@@ -2806,18 +2812,18 @@ registerLesson({ id:'sh5', modId:'bash', num:5, title:'Processes, Background Job
 <div class="quiz-item" id="q-sh2-1">
   <div class="quiz-q">What does <code>PORT=${PORT:-8080}</code> do?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-sh2-1','If PORT is already set to something, that value is kept. 8080 is only the fallback.')"><span class="quiz-radio"></span> Always sets PORT to 8080</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-sh2-1','Correct. ${VAR:-default} means: use the current value of VAR if it\'s set and non-empty; otherwise use the default value.')"><span class="quiz-radio"></span> Sets PORT to its current value if already set, otherwise defaults to 8080</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-sh2-1','It assigns a value — it doesn\'t check a condition independently.')"><span class="quiz-radio"></span> Checks whether PORT equals 8080</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-sh2-1" data-exp="If PORT is already set to something, that value is kept. 8080 is only the fallback." onclick="answer(this)"><span class="quiz-radio"></span> Always sets PORT to 8080</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-sh2-1" data-exp="Correct. ${VAR:-default} means: use the current value of VAR if it's set and non-empty; otherwise use the default value." onclick="answer(this)"><span class="quiz-radio"></span> Sets PORT to its current value if already set, otherwise defaults to 8080</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-sh2-1" data-exp="It assigns a value — it doesn't check a condition independently." onclick="answer(this)"><span class="quiz-radio"></span> Checks whether PORT equals 8080</div>
   </div>
   <div class="quiz-exp" id="q-sh2-1-exp"></div>
 </div>
 <div class="quiz-item" id="q-sh2-2">
   <div class="quiz-q">What is the difference between setting a variable (<code>PORT=8080</code>) and exporting it (<code>export PORT=8080</code>)?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-sh2-2','export doesn\'t affect the value — it affects visibility to child processes.')"><span class="quiz-radio"></span> export makes the value permanent across reboots</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-sh2-2','Correct. Without export, the variable exists only in the current shell. With export, it\'s added to the environment and inherited by any child processes — like the Python app you launch from the script.')"><span class="quiz-radio"></span> Without export, the variable only exists in the current shell; with export, child processes (like python app.py) can see it</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-sh2-2','There\'s no syntax difference in the variable value itself.')"><span class="quiz-radio"></span> export requires quotes around the value</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-sh2-2" data-exp="export doesn't affect the value — it affects visibility to child processes." onclick="answer(this)"><span class="quiz-radio"></span> export makes the value permanent across reboots</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-sh2-2" data-exp="Correct. Without export, the variable exists only in the current shell. With export, it's added to the environment and inherited by any child processes — like the Python app you launch from the script." onclick="answer(this)"><span class="quiz-radio"></span> Without export, the variable only exists in the current shell; with export, child processes (like python app.py) can see it</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-sh2-2" data-exp="There's no syntax difference in the variable value itself." onclick="answer(this)"><span class="quiz-radio"></span> export requires quotes around the value</div>
   </div>
   <div class="quiz-exp" id="q-sh2-2-exp"></div>
 </div>
@@ -2903,18 +2909,18 @@ registerLesson({ id:'sh5', modId:'bash', num:5, title:'Processes, Background Job
 <div class="quiz-item" id="q-sh3-1">
   <div class="quiz-q">What is the difference between <code>&gt;</code> and <code>&gt;&gt;</code> for file redirection?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,true,'q-sh3-1','Correct. > overwrites the file entirely each time. >> appends to whatever is already there. Use >> for logs you want to accumulate; use > when you only want the latest output.')"><span class="quiz-radio"></span> > overwrites the file; >> appends to it</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-sh3-1','It\'s the opposite — > overwrites, >> appends.')"><span class="quiz-radio"></span> > appends; >> overwrites</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-sh3-1','Both redirect to a file. The difference is append vs overwrite, not stdout vs stderr.')"><span class="quiz-radio"></span> > redirects stdout; >> redirects stderr</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-sh3-1" data-exp="Correct. > overwrites the file entirely each time. >> appends to whatever is already there. Use >> for logs you want to accumulate; use > when you only want the latest output." onclick="answer(this)"> overwrites the file entirely each time. >> appends to whatever is already there. Use >> for logs you want to accumulate; use > when you only want the latest output.')"><span class="quiz-radio"></span> > overwrites the file; >> appends to it</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-sh3-1" data-exp="It's the opposite — > overwrites, >> appends." onclick="answer(this)"> overwrites, >> appends.')"><span class="quiz-radio"></span> > appends; >> overwrites</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-sh3-1" data-exp="Both redirect to a file. The difference is append vs overwrite, not stdout vs stderr." onclick="answer(this)"><span class="quiz-radio"></span> > redirects stdout; >> redirects stderr</div>
   </div>
   <div class="quiz-exp" id="q-sh3-1-exp"></div>
 </div>
 <div class="quiz-item" id="q-sh3-2">
   <div class="quiz-q">What does <code>cd /app && python app.py</code> do differently than <code>cd /app ; python app.py</code>?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-sh3-2','Both run python app.py after cd — the difference is what happens when cd fails.')"><span class="quiz-radio"></span> They are identical</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-sh3-2','Correct. && only runs the second command if the first succeeded (exit code 0). With ;, python app.py would run even if cd failed — potentially running the app from the wrong directory.')"><span class="quiz-radio"></span> With &&, python only runs if cd succeeds; with ;, python runs regardless of whether cd succeeded</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-sh3-2','Both run commands in the same shell. & is for background processes, not &&.')"><span class="quiz-radio"></span> && runs in a subshell; ; runs in the current shell</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-sh3-2" data-exp="Both run python app.py after cd — the difference is what happens when cd fails." onclick="answer(this)"><span class="quiz-radio"></span> They are identical</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-sh3-2" data-exp="Correct. && only runs the second command if the first succeeded (exit code 0). With ;, python app.py would run even if cd failed — potentially running the app from the wrong directory." onclick="answer(this)"><span class="quiz-radio"></span> With &&, python only runs if cd succeeds; with ;, python runs regardless of whether cd succeeded</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-sh3-2" data-exp="Both run commands in the same shell. & is for background processes, not &&." onclick="answer(this)"><span class="quiz-radio"></span> && runs in a subshell; ; runs in the current shell</div>
   </div>
   <div class="quiz-exp" id="q-sh3-2-exp"></div>
 </div>
@@ -3028,18 +3034,18 @@ python app.py > skyqueue.log 2>&amp;1 &amp;
 <div class="quiz-item" id="q-sh4-1">
   <div class="quiz-q">What does <code>set -e</code> at the top of a script do?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-sh4-1','set -e has nothing to do with environment variables.')"><span class="quiz-radio"></span> Sets all variables to be exported as environment variables</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-sh4-1','Correct. set -e (errexit) makes Bash exit immediately if any command returns a non-zero exit code. Without it, a failed command is silently ignored and the script continues — often causing cascading failures.')"><span class="quiz-radio"></span> Causes the script to exit immediately if any command fails (returns non-zero)</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-sh4-1','set -e is about exit behavior, not echo.')"><span class="quiz-radio"></span> Enables echo for every command before it runs</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-sh4-1" data-exp="set -e has nothing to do with environment variables." onclick="answer(this)"><span class="quiz-radio"></span> Sets all variables to be exported as environment variables</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-sh4-1" data-exp="Correct. set -e (errexit) makes Bash exit immediately if any command returns a non-zero exit code. Without it, a failed command is silently ignored and the script continues — often causing cascading failures." onclick="answer(this)"><span class="quiz-radio"></span> Causes the script to exit immediately if any command fails (returns non-zero)</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-sh4-1" data-exp="set -e is about exit behavior, not echo." onclick="answer(this)"><span class="quiz-radio"></span> Enables echo for every command before it runs</div>
   </div>
   <div class="quiz-exp" id="q-sh4-1-exp"></div>
 </div>
 <div class="quiz-item" id="q-sh4-2">
   <div class="quiz-q">In a Bash <code>if</code> statement, what does <code>-f</code> test for?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-sh4-2','-d tests for directory. -f is specifically for regular files.')"><span class="quiz-radio"></span> Whether a directory exists</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-sh4-2','Correct. -f tests that the path exists AND is a regular file (not a directory or symlink). So [ -f posts.json ] is true only if posts.json is an actual file.')"><span class="quiz-radio"></span> Whether a path exists and is a regular file</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-sh4-2','-f doesn\'t check permissions — use -r, -w, -x for that.')"><span class="quiz-radio"></span> Whether a file has execute permissions</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-sh4-2" data-exp="-d tests for directory. -f is specifically for regular files." onclick="answer(this)"><span class="quiz-radio"></span> Whether a directory exists</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-sh4-2" data-exp="Correct. -f tests that the path exists AND is a regular file (not a directory or symlink). So [ -f posts.json ] is true only if posts.json is an actual file." onclick="answer(this)"><span class="quiz-radio"></span> Whether a path exists and is a regular file</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-sh4-2" data-exp="-f doesn't check permissions — use -r, -w, -x for that." onclick="answer(this)"><span class="quiz-radio"></span> Whether a file has execute permissions</div>
   </div>
   <div class="quiz-exp" id="q-sh4-2-exp"></div>
 </div>
@@ -3139,23 +3145,24 @@ python app.py > skyqueue.log 2>&amp;1 &amp;
 <div class="quiz-item" id="q-sh5-1">
   <div class="quiz-q">What does the cron schedule <code>*/15 * * * *</code> mean?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-sh5-1','The * in the other fields means every hour, day, etc. — this runs every 15 minutes all day, not once.')"><span class="quiz-radio"></span> Run once, 15 minutes after system boot</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-sh5-1','Correct. */15 in the minute field means "every 15 minutes" — at :00, :15, :30, and :45 of every hour. The * in remaining fields means every hour, every day, etc.')"><span class="quiz-radio"></span> Run every 15 minutes, every hour, every day</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-sh5-1','The fields are minute, hour, day, month, weekday — minute comes first.')"><span class="quiz-radio"></span> Run at 15:00 (3pm) every day</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-sh5-1" data-exp="The * in the other fields means every hour, day, etc. — this runs every 15 minutes all day, not once." onclick="answer(this)"><span class="quiz-radio"></span> Run once, 15 minutes after system boot</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-sh5-1" data-exp="Correct. */15 in the minute field means &quot;every 15 minutes&quot; — at :00, :15, :30, and :45 of every hour. The * in remaining fields means every hour, every day, etc." onclick="answer(this)"><span class="quiz-radio"></span> Run every 15 minutes, every hour, every day</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-sh5-1" data-exp="The fields are minute, hour, day, month, weekday — minute comes first." onclick="answer(this)"><span class="quiz-radio"></span> Run at 15:00 (3pm) every day</div>
   </div>
   <div class="quiz-exp" id="q-sh5-1-exp"></div>
 </div>
 <div class="quiz-item" id="q-sh5-2">
   <div class="quiz-q">Why should you use absolute paths in cron jobs rather than relative ones?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-sh5-2','Performance isn\'t the reason — PATH availability is.')"><span class="quiz-radio"></span> Absolute paths run faster</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-sh5-2','Correct. Cron jobs run with a minimal PATH — commands like python3, pip, or custom scripts that work in your shell may not be found by cron. Absolute paths bypass the PATH lookup entirely.')"><span class="quiz-radio"></span> Cron runs with a minimal PATH environment, so commands without full paths may not be found</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-sh5-2','Cron doesn\'t require root — but PATH availability is still the issue.')"><span class="quiz-radio"></span> Cron runs as root and needs explicit paths for security</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-sh5-2" data-exp="Performance isn't the reason — PATH availability is." onclick="answer(this)"><span class="quiz-radio"></span> Absolute paths run faster</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-sh5-2" data-exp="Correct. Cron jobs run with a minimal PATH — commands like python3, pip, or custom scripts that work in your shell may not be found by cron. Absolute paths bypass the PATH lookup entirely." onclick="answer(this)"><span class="quiz-radio"></span> Cron runs with a minimal PATH environment, so commands without full paths may not be found</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-sh5-2" data-exp="Cron doesn't require root — but PATH availability is still the issue." onclick="answer(this)"><span class="quiz-radio"></span> Cron runs as root and needs explicit paths for security</div>
   </div>
   <div class="quiz-exp" id="q-sh5-2-exp"></div>
 </div>
 <button class="btn btn-next" onclick="markLessonDone('sh5')">Complete Module 04 → Module 05 coming next</button>
 </template>
+
 <script>
 registerModule({ id:'json', label:'05 — JSON & YAML', color:'#4e8ef7' });
 registerLesson({ id:'jy1', modId:'json', num:1, title:'JSON Structure & Syntax Rules', templateId:'tpl-jy1' });
@@ -3163,10 +3170,6 @@ registerLesson({ id:'jy2', modId:'json', num:2, title:'JSON in Practice: package
 registerLesson({ id:'jy3', modId:'json', num:3, title:'YAML Fundamentals', templateId:'tpl-jy3' });
 registerLesson({ id:'jy4', modId:'json', num:4, title:'YAML in Practice: Railway, GitHub Actions & Docker', templateId:'tpl-jy4' });
 </script>
-
-<!-- ═══════════════════════════════════════════════ -->
-<!-- MODULE 05 LESSON TEMPLATES                      -->
-<!-- ═══════════════════════════════════════════════ -->
 
 <template id="tpl-jy1">
 <div class="lesson-eyebrow">
@@ -3268,18 +3271,18 @@ registerLesson({ id:'jy4', modId:'json', num:4, title:'YAML in Practice: Railway
 <div class="quiz-item" id="q-jy1-1">
   <div class="quiz-q">Which of these is valid JSON?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-jy1-1','Single quotes are not valid in JSON — strings must use double quotes.')"><span class="quiz-radio"></span> <code>{ 'name': 'SkyQueue' }</code></div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-jy1-1','Trailing comma after the last value is not valid JSON — it would cause a parse error.')"><span class="quiz-radio"></span> <code>{ "name": "SkyQueue", "port": 8080, }</code></div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-jy1-1','Correct. Double-quoted keys and string values, a bare number value, no trailing comma — this is valid JSON.')"><span class="quiz-radio"></span> <code>{ "name": "SkyQueue", "port": 8080 }</code></div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-jy1-1" data-exp="Single quotes are not valid in JSON — strings must use double quotes." onclick="answer(this)"><span class="quiz-radio"></span> <code>{ 'name': 'SkyQueue' }</code></div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-jy1-1" data-exp="Trailing comma after the last value is not valid JSON — it would cause a parse error." onclick="answer(this)"><span class="quiz-radio"></span> <code>{ "name": "SkyQueue", "port": 8080, }</code></div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-jy1-1" data-exp="Correct. Double-quoted keys and string values, a bare number value, no trailing comma — this is valid JSON." onclick="answer(this)"><span class="quiz-radio"></span> <code>{ "name": "SkyQueue", "port": 8080 }</code></div>
   </div>
   <div class="quiz-exp" id="q-jy1-1-exp"></div>
 </div>
 <div class="quiz-item" id="q-jy1-2">
   <div class="quiz-q">How are dates represented in JSON?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-jy1-2','JSON has no Date type — dates must be encoded as strings.')"><span class="quiz-radio"></span> As a special Date object type</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-jy1-2','Correct. JSON has no date type. Dates are stored as strings — typically ISO 8601 format like "2026-04-05T12:00:00Z". The application is responsible for parsing the string into a date object.')"><span class="quiz-radio"></span> As strings, typically in ISO 8601 format like "2026-04-05T12:00:00Z"</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-jy1-2','Unix timestamps are just numbers — there\'s no special timestamp type in JSON.')"><span class="quiz-radio"></span> As Unix timestamps (milliseconds since epoch)</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-jy1-2" data-exp="JSON has no Date type — dates must be encoded as strings." onclick="answer(this)"><span class="quiz-radio"></span> As a special Date object type</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-jy1-2" data-exp="Correct. JSON has no date type. Dates are stored as strings — typically ISO 8601 format like &quot;2026-04-05T12:00:00Z&quot;. The application is responsible for parsing the string into a date object." onclick="answer(this)"><span class="quiz-radio"></span> As strings, typically in ISO 8601 format like "2026-04-05T12:00:00Z"</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-jy1-2" data-exp="Unix timestamps are just numbers — there's no special timestamp type in JSON." onclick="answer(this)"><span class="quiz-radio"></span> As Unix timestamps (milliseconds since epoch)</div>
   </div>
   <div class="quiz-exp" id="q-jy1-2-exp"></div>
 </div>
@@ -3393,18 +3396,18 @@ registerLesson({ id:'jy4', modId:'json', num:4, title:'YAML in Practice: Railway
 <div class="quiz-item" id="q-jy2-1">
   <div class="quiz-q">What is the difference between <code>dependencies</code> and <code>devDependencies</code> in package.json?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-jy2-1','Both sections install real npm packages — the difference is when they\'re needed.')"><span class="quiz-radio"></span> dependencies are JavaScript; devDependencies are TypeScript</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-jy2-1','Correct. dependencies are needed at runtime — they ship with your production app. devDependencies are only needed during development (linters, test runners, bundlers) and are excluded from production deployments.')"><span class="quiz-radio"></span> dependencies are needed at runtime in production; devDependencies are only needed during development</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-jy2-1','Both install from npm — the difference is runtime vs development use.')"><span class="quiz-radio"></span> dependencies install from npm; devDependencies install locally from disk</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-jy2-1" data-exp="Both sections install real npm packages — the difference is when they're needed." onclick="answer(this)"><span class="quiz-radio"></span> dependencies are JavaScript; devDependencies are TypeScript</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-jy2-1" data-exp="Correct. dependencies are needed at runtime — they ship with your production app. devDependencies are only needed during development (linters, test runners, bundlers) and are excluded from production deployments." onclick="answer(this)"><span class="quiz-radio"></span> dependencies are needed at runtime in production; devDependencies are only needed during development</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-jy2-1" data-exp="Both install from npm — the difference is runtime vs development use." onclick="answer(this)"><span class="quiz-radio"></span> dependencies install from npm; devDependencies install locally from disk</div>
   </div>
   <div class="quiz-exp" id="q-jy2-1-exp"></div>
 </div>
 <div class="quiz-item" id="q-jy2-2">
   <div class="quiz-q">What does the <code>^</code> in <code>"express": "^4.18.2"</code> mean?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-jy2-2','^ allows compatible minor and patch updates within the same major version.')"><span class="quiz-radio"></span> Install only exactly version 4.18.2</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-jy2-2','Correct. The caret (^) allows npm to install any version that is compatible — same major version, any minor or patch. So ^4.18.2 allows 4.18.3, 4.19.0, but not 5.0.0.')"><span class="quiz-radio"></span> Allow any compatible update within the same major version (4.x.x)</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-jy2-2','^ is a version range specifier, not a latest-version flag.')"><span class="quiz-radio"></span> Always install the latest available version</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-jy2-2" data-exp="^ allows compatible minor and patch updates within the same major version." onclick="answer(this)"><span class="quiz-radio"></span> Install only exactly version 4.18.2</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-jy2-2" data-exp="Correct. The caret (^) allows npm to install any version that is compatible — same major version, any minor or patch. So ^4.18.2 allows 4.18.3, 4.19.0, but not 5.0.0." onclick="answer(this)"><span class="quiz-radio"></span> Allow any compatible update within the same major version (4.x.x)</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-jy2-2" data-exp="^ is a version range specifier, not a latest-version flag." onclick="answer(this)"><span class="quiz-radio"></span> Always install the latest available version</div>
   </div>
   <div class="quiz-exp" id="q-jy2-2-exp"></div>
 </div>
@@ -3508,18 +3511,18 @@ registerLesson({ id:'jy4', modId:'json', num:4, title:'YAML in Practice: Railway
 <div class="quiz-item" id="q-jy3-1">
   <div class="quiz-q">In YAML, what does a <code>-</code> (dash + space) at the start of a line indicate?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-jy3-1','A dash is not a comment in YAML — # is the comment character.')"><span class="quiz-radio"></span> A comment</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-jy3-1','Correct. In YAML, - (dash space) marks a list item. An indented block of dash-prefixed lines is a YAML sequence (equivalent to a JSON array).')"><span class="quiz-radio"></span> A list item — sequences in YAML are defined with dash prefixes</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-jy3-1','A dash is a list item marker, not a separator between key and value.')"><span class="quiz-radio"></span> A separator between key and value</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-jy3-1" data-exp="A dash is not a comment in YAML — # is the comment character." onclick="answer(this)"><span class="quiz-radio"></span> A comment</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-jy3-1" data-exp="Correct. In YAML, - (dash space) marks a list item. An indented block of dash-prefixed lines is a YAML sequence (equivalent to a JSON array)." onclick="answer(this)"><span class="quiz-radio"></span> A list item — sequences in YAML are defined with dash prefixes</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-jy3-1" data-exp="A dash is a list item marker, not a separator between key and value." onclick="answer(this)"><span class="quiz-radio"></span> A separator between key and value</div>
   </div>
   <div class="quiz-exp" id="q-jy3-1-exp"></div>
 </div>
 <div class="quiz-item" id="q-jy3-2">
   <div class="quiz-q">What is the main structural difference between YAML and JSON?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-jy3-2','Both support the same data types — YAML doesn\'t add new types.')"><span class="quiz-radio"></span> YAML supports more data types than JSON</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-jy3-2','Correct. JSON uses curly braces, square brackets, and commas for structure. YAML uses indentation and colons — making it more readable but also sensitive to whitespace errors.')"><span class="quiz-radio"></span> YAML uses indentation and colons for structure; JSON uses curly braces, brackets, and commas</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-jy3-2','YAML supports comments; JSON does not — but that\'s a feature difference, not the main structural difference.')"><span class="quiz-radio"></span> YAML supports comments; JSON does not</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-jy3-2" data-exp="Both support the same data types — YAML doesn't add new types." onclick="answer(this)"><span class="quiz-radio"></span> YAML supports more data types than JSON</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-jy3-2" data-exp="Correct. JSON uses curly braces, square brackets, and commas for structure. YAML uses indentation and colons — making it more readable but also sensitive to whitespace errors." onclick="answer(this)"><span class="quiz-radio"></span> YAML uses indentation and colons for structure; JSON uses curly braces, brackets, and commas</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-jy3-2" data-exp="YAML supports comments; JSON does not — but that's a feature difference, not the main structural difference." onclick="answer(this)"><span class="quiz-radio"></span> YAML supports comments; JSON does not</div>
   </div>
   <div class="quiz-exp" id="q-jy3-2-exp"></div>
 </div>
@@ -3643,23 +3646,24 @@ registerLesson({ id:'jy4', modId:'json', num:4, title:'YAML in Practice: Railway
 <div class="quiz-item" id="q-jy4-1">
   <div class="quiz-q">In a GitHub Actions workflow, what does the <code>on: push: branches: [main]</code> block control?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-jy4-1','on: defines triggers, not what the job does.')"><span class="quiz-radio"></span> What commands the job runs</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-jy4-1','Correct. The on: key defines workflow triggers. on: push: branches: [main] means this workflow only runs when code is pushed to the main branch.')"><span class="quiz-radio"></span> What events trigger the workflow — in this case, pushes to the main branch</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-jy4-1','The runs-on key controls the machine type, not on:.')"><span class="quiz-radio"></span> Which machine (OS) the job runs on</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-jy4-1" data-exp="on: defines triggers, not what the job does." onclick="answer(this)"><span class="quiz-radio"></span> What commands the job runs</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-jy4-1" data-exp="Correct. The on: key defines workflow triggers. on: push: branches: [main] means this workflow only runs when code is pushed to the main branch." onclick="answer(this)"><span class="quiz-radio"></span> What events trigger the workflow — in this case, pushes to the main branch</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-jy4-1" data-exp="The runs-on key controls the machine type, not on:." onclick="answer(this)"><span class="quiz-radio"></span> Which machine (OS) the job runs on</div>
   </div>
   <div class="quiz-exp" id="q-jy4-1-exp"></div>
 </div>
 <div class="quiz-item" id="q-jy4-2">
   <div class="quiz-q">What does <code>${{ secrets.RAILWAY_TOKEN }}</code> do in a GitHub Actions YAML file?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-jy4-2','The secret is stored in GitHub repo settings, not the YAML file itself.')"><span class="quiz-radio"></span> Hardcodes the token value directly in the file</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-jy4-2','Correct. ${{ secrets.NAME }} is a GitHub Actions expression that injects a secret stored securely in the repository settings at runtime. The secret value never appears in the YAML file or logs.')"><span class="quiz-radio"></span> Injects a secret stored in GitHub repository settings — the value never appears in the file</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-jy4-2','Secrets in GitHub Actions are injected at runtime, not read from a local .env.')"><span class="quiz-radio"></span> Reads the token from a local .env file</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-jy4-2" data-exp="The secret is stored in GitHub repo settings, not the YAML file itself." onclick="answer(this)"><span class="quiz-radio"></span> Hardcodes the token value directly in the file</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-jy4-2" data-exp="Correct. ${{ secrets.NAME }} is a GitHub Actions expression that injects a secret stored securely in the repository settings at runtime. The secret value never appears in the YAML file or logs." onclick="answer(this)"><span class="quiz-radio"></span> Injects a secret stored in GitHub repository settings — the value never appears in the file</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-jy4-2" data-exp="Secrets in GitHub Actions are injected at runtime, not read from a local .env." onclick="answer(this)"><span class="quiz-radio"></span> Reads the token from a local .env file</div>
   </div>
   <div class="quiz-exp" id="q-jy4-2-exp"></div>
 </div>
 <button class="btn btn-next" onclick="markLessonDone('jy4')">Complete Module 05 → Module 06 coming next</button>
 </template>
+
 <script>
 registerModule({ id:'react', label:'06 — React & JSX', color:'#44d4e8' });
 registerLesson({ id:'rx1', modId:'react', num:1, title:'Components & Props', templateId:'tpl-rx1' });
@@ -3669,10 +3673,6 @@ registerLesson({ id:'rx4', modId:'react', num:4, title:'useEffect: Side Effects 
 registerLesson({ id:'rx5', modId:'react', num:5, title:'Lists, Keys & Component Composition', templateId:'tpl-rx5' });
 registerLesson({ id:'rx6', modId:'react', num:6, title:'Fetching Data in React', templateId:'tpl-rx6' });
 </script>
-
-<!-- ═══════════════════════════════════════════════ -->
-<!-- MODULE 06 LESSON TEMPLATES                      -->
-<!-- ═══════════════════════════════════════════════ -->
 
 <template id="tpl-rx1">
 <div class="lesson-eyebrow">
@@ -3764,18 +3764,18 @@ registerLesson({ id:'rx6', modId:'react', num:6, title:'Fetching Data in React',
 <div class="quiz-item" id="q-rx1-1">
   <div class="quiz-q">What are props in React?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-rx1-1','State is internal to a component. Props are external — passed in from the parent.')"><span class="quiz-radio"></span> Internal variables that a component manages itself</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-rx1-1','Correct. Props are values passed from a parent component to a child, like arguments to a function. The child can read them but not modify them.')"><span class="quiz-radio"></span> Values passed from a parent component to a child component — read-only inside the child</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-rx1-1','CSS properties are separate from React props — though className is a prop that maps to a CSS class.')"><span class="quiz-radio"></span> CSS properties applied to JSX elements</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-rx1-1" data-exp="State is internal to a component. Props are external — passed in from the parent." onclick="answer(this)"><span class="quiz-radio"></span> Internal variables that a component manages itself</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-rx1-1" data-exp="Correct. Props are values passed from a parent component to a child, like arguments to a function. The child can read them but not modify them." onclick="answer(this)"><span class="quiz-radio"></span> Values passed from a parent component to a child component — read-only inside the child</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-rx1-1" data-exp="CSS properties are separate from React props — though className is a prop that maps to a CSS class." onclick="answer(this)"><span class="quiz-radio"></span> CSS properties applied to JSX elements</div>
   </div>
   <div class="quiz-exp" id="q-rx1-1-exp"></div>
 </div>
 <div class="quiz-item" id="q-rx1-2">
   <div class="quiz-q">Can a child component modify the props passed to it?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-rx1-2','Props are read-only. If a child needs to communicate upward, the parent passes a callback function as a prop.')"><span class="quiz-radio"></span> Yes — that\'s how child components communicate back to parents</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-rx1-2','Correct. Props are read-only. Data flows one way: down from parent to child. If a child needs to trigger a change in the parent, the parent passes a callback function as a prop and the child calls it.')"><span class="quiz-radio"></span> No — props are read-only; data flows down only</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-rx1-2','Props are always read-only regardless of type.')"><span class="quiz-radio"></span> Only if the prop is an object or array</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-rx1-2" data-exp="Props are read-only. If a child needs to communicate upward, the parent passes a callback function as a prop." onclick="answer(this)"><span class="quiz-radio"></span> Yes — that&#39;s how child components communicate back to parents</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-rx1-2" data-exp="Correct. Props are read-only. Data flows one way: down from parent to child. If a child needs to trigger a change in the parent, the parent passes a callback function as a prop and the child calls it." onclick="answer(this)"><span class="quiz-radio"></span> No — props are read-only; data flows down only</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-rx1-2" data-exp="Props are always read-only regardless of type." onclick="answer(this)"><span class="quiz-radio"></span> Only if the prop is an object or array</div>
   </div>
   <div class="quiz-exp" id="q-rx1-2-exp"></div>
 </div>
@@ -3864,18 +3864,18 @@ registerLesson({ id:'rx6', modId:'react', num:6, title:'Fetching Data in React',
 <div class="quiz-item" id="q-rx2-1">
   <div class="quiz-q">Why does JSX use <code>className</code> instead of <code>class</code>?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-rx2-1','It\'s not a performance reason — it\'s a naming conflict with JavaScript.')"><span class="quiz-radio"></span> For performance reasons in the virtual DOM</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-rx2-1','Correct. JSX compiles to JavaScript, and class is a reserved keyword in JavaScript (for defining classes). className avoids the conflict and maps to the DOM\'s className property.')"><span class="quiz-radio"></span> Because class is a reserved keyword in JavaScript — JSX uses className to avoid the conflict</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-rx2-1','HTML and CSS still use class — it\'s only JSX that requires className.')"><span class="quiz-radio"></span> Because React replaces CSS classes with inline styles</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-rx2-1" data-exp="It's not a performance reason — it's a naming conflict with JavaScript." onclick="answer(this)"><span class="quiz-radio"></span> For performance reasons in the virtual DOM</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-rx2-1" data-exp="Correct. JSX compiles to JavaScript, and class is a reserved keyword in JavaScript (for defining classes). className avoids the conflict and maps to the DOM's className property." onclick="answer(this)"><span class="quiz-radio"></span> Because class is a reserved keyword in JavaScript — JSX uses className to avoid the conflict</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-rx2-1" data-exp="HTML and CSS still use class — it's only JSX that requires className." onclick="answer(this)"><span class="quiz-radio"></span> Because React replaces CSS classes with inline styles</div>
   </div>
   <div class="quiz-exp" id="q-rx2-1-exp"></div>
 </div>
 <div class="quiz-item" id="q-rx2-2">
   <div class="quiz-q">What do the empty tags <code>&lt;&gt;...&lt;/&gt;</code> do in JSX?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-rx2-2','Empty tags are a React Fragment shorthand — they don\'t denote a template.')"><span class="quiz-radio"></span> Define a reusable template</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-rx2-2','Correct. &lt;&gt;&lt;/&gt; is shorthand for React.Fragment. It lets you return multiple elements without adding an extra DOM node like a div.')"><span class="quiz-radio"></span> Wrap multiple elements without adding an extra DOM node (React Fragment shorthand)</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-rx2-2','Empty tags render nothing visible, but they do create a React Fragment node in the component tree.')"><span class="quiz-radio"></span> Render nothing — they are ignored by React</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-rx2-2" data-exp="Empty tags are a React Fragment shorthand — they don't denote a template." onclick="answer(this)"><span class="quiz-radio"></span> Define a reusable template</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-rx2-2" data-exp="Correct. &lt;&gt;&lt;/&gt; is shorthand for React.Fragment. It lets you return multiple elements without adding an extra DOM node like a div." onclick="answer(this)"><span class="quiz-radio"></span> Wrap multiple elements without adding an extra DOM node (React Fragment shorthand)</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-rx2-2" data-exp="Empty tags render nothing visible, but they do create a React Fragment node in the component tree." onclick="answer(this)"><span class="quiz-radio"></span> Render nothing — they are ignored by React</div>
   </div>
   <div class="quiz-exp" id="q-rx2-2-exp"></div>
 </div>
@@ -3962,18 +3962,18 @@ registerLesson({ id:'rx6', modId:'react', num:6, title:'Fetching Data in React',
 <div class="quiz-item" id="q-rx3-1">
   <div class="quiz-q">What happens when you call a state setter like <code>setResults(data)</code>?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-rx3-1','The current render still sees the old value. The new value appears on the next render.')"><span class="quiz-radio"></span> results immediately has the new value in the current render</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-rx3-1','Correct. React schedules a re-render. When the component function runs again, results will have the new value. The current execution still sees the old value.')"><span class="quiz-radio"></span> React schedules a re-render; on the next render, results has the new value</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-rx3-1','State setters don\'t return promises — but they are async in the sense that updates are batched.')"><span class="quiz-radio"></span> You have to await it because state updates are async</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-rx3-1" data-exp="The current render still sees the old value. The new value appears on the next render." onclick="answer(this)"><span class="quiz-radio"></span> results immediately has the new value in the current render</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-rx3-1" data-exp="Correct. React schedules a re-render. When the component function runs again, results will have the new value. The current execution still sees the old value." onclick="answer(this)"><span class="quiz-radio"></span> React schedules a re-render; on the next render, results has the new value</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-rx3-1" data-exp="State setters don't return promises — but they are async in the sense that updates are batched." onclick="answer(this)"><span class="quiz-radio"></span> You have to await it because state updates are async</div>
   </div>
   <div class="quiz-exp" id="q-rx3-1-exp"></div>
 </div>
 <div class="quiz-item" id="q-rx3-2">
   <div class="quiz-q">What makes an input "controlled" in React?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-rx3-2','Disabled is a separate attribute — controlled refers to where the value lives.')"><span class="quiz-radio"></span> It has the disabled attribute</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-rx3-2','Correct. A controlled input has its value driven by React state via the value prop. The input always reflects what\'s in state. onChange updates state, which causes a re-render, which updates the input display.')"><span class="quiz-radio"></span> Its value prop is set from React state, and onChange updates that state</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-rx3-2','Any input can have a placeholder — that doesn\'t make it controlled.')"><span class="quiz-radio"></span> It has a placeholder attribute</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-rx3-2" data-exp="Disabled is a separate attribute — controlled refers to where the value lives." onclick="answer(this)"><span class="quiz-radio"></span> It has the disabled attribute</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-rx3-2" data-exp="Correct. A controlled input has its value driven by React state via the value prop. The input always reflects what's in state. onChange updates state, which causes a re-render, which updates the input display." onclick="answer(this)"><span class="quiz-radio"></span> Its value prop is set from React state, and onChange updates that state</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-rx3-2" data-exp="Any input can have a placeholder — that doesn't make it controlled." onclick="answer(this)"><span class="quiz-radio"></span> It has a placeholder attribute</div>
   </div>
   <div class="quiz-exp" id="q-rx3-2-exp"></div>
 </div>
@@ -4068,18 +4068,18 @@ registerLesson({ id:'rx6', modId:'react', num:6, title:'Fetching Data in React',
 <div class="quiz-item" id="q-rx4-1">
   <div class="quiz-q">What does a <code>useEffect</code> with an empty dependency array <code>[]</code> do?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-rx4-1','An empty array means run once — not on every render.')"><span class="quiz-radio"></span> Runs the effect after every render</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-rx4-1','Correct. An empty dependency array means "no dependencies change" — so the effect runs exactly once, after the component\'s first render. Equivalent to componentDidMount in class components.')"><span class="quiz-radio"></span> Runs the effect once after the first render only</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-rx4-1','An empty array still runs the effect — just once.')"><span class="quiz-radio"></span> Disables the effect entirely</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-rx4-1" data-exp="An empty array means run once — not on every render." onclick="answer(this)"><span class="quiz-radio"></span> Runs the effect after every render</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-rx4-1" data-exp="Correct. An empty dependency array means &quot;no dependencies change&quot; — so the effect runs exactly once, after the component&#39;s first render. Equivalent to componentDidMount in class components." onclick="answer(this)"><span class="quiz-radio"></span> Runs the effect once after the first render only</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-rx4-1" data-exp="An empty array still runs the effect — just once." onclick="answer(this)"><span class="quiz-radio"></span> Disables the effect entirely</div>
   </div>
   <div class="quiz-exp" id="q-rx4-1-exp"></div>
 </div>
 <div class="quiz-item" id="q-rx4-2">
   <div class="quiz-q">What is the cleanup function returned from a useEffect used for?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-rx4-2','The cleanup runs before the next effect execution or on unmount — not after every render.')"><span class="quiz-radio"></span> It runs after every render to reset state</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-rx4-2','Correct. The cleanup function runs before the next execution of the effect (if deps change) or when the component unmounts. Used to cancel timers, remove event listeners, or abort fetch requests to prevent memory leaks.')"><span class="quiz-radio"></span> It runs when the component unmounts or before the effect re-runs — used to cancel timers, remove listeners, or abort requests</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-rx4-2','The cleanup is for resource cleanup, not error handling.')"><span class="quiz-radio"></span> It handles errors thrown inside the effect</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-rx4-2" data-exp="The cleanup runs before the next effect execution or on unmount — not after every render." onclick="answer(this)"><span class="quiz-radio"></span> It runs after every render to reset state</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-rx4-2" data-exp="Correct. The cleanup function runs before the next execution of the effect (if deps change) or when the component unmounts. Used to cancel timers, remove event listeners, or abort fetch requests to prevent memory leaks." onclick="answer(this)"><span class="quiz-radio"></span> It runs when the component unmounts or before the effect re-runs — used to cancel timers, remove listeners, or abort requests</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-rx4-2" data-exp="The cleanup is for resource cleanup, not error handling." onclick="answer(this)"><span class="quiz-radio"></span> It handles errors thrown inside the effect</div>
   </div>
   <div class="quiz-exp" id="q-rx4-2-exp"></div>
 </div>
@@ -4185,18 +4185,18 @@ registerLesson({ id:'rx6', modId:'react', num:6, title:'Fetching Data in React',
 <div class="quiz-item" id="q-rx5-1">
   <div class="quiz-q">Why should you use a stable ID as a <code>key</code> prop instead of the array index?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-rx5-1','Performance is not the primary reason — correctness is.')"><span class="quiz-radio"></span> Array index is slower for React to process</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-rx5-1','Correct. When the list order changes (deletion, sorting, insertion), array indexes shift. React uses keys to match old rendered items with new ones — if keys shift with the index, React misidentifies items and produces buggy re-renders.')"><span class="quiz-radio"></span> When list order changes, index-based keys shift, causing React to misidentify items and produce buggy re-renders</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-rx5-1','React doesn\'t require IDs to be from a database — any stable unique value works.')"><span class="quiz-radio"></span> React requires keys to match database IDs</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-rx5-1" data-exp="Performance is not the primary reason — correctness is." onclick="answer(this)"><span class="quiz-radio"></span> Array index is slower for React to process</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-rx5-1" data-exp="Correct. When the list order changes (deletion, sorting, insertion), array indexes shift. React uses keys to match old rendered items with new ones — if keys shift with the index, React misidentifies items and produces buggy re-renders." onclick="answer(this)"><span class="quiz-radio"></span> When list order changes, index-based keys shift, causing React to misidentify items and produce buggy re-renders</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-rx5-1" data-exp="React doesn't require IDs to be from a database — any stable unique value works." onclick="answer(this)"><span class="quiz-radio"></span> React requires keys to match database IDs</div>
   </div>
   <div class="quiz-exp" id="q-rx5-1-exp"></div>
 </div>
 <div class="quiz-item" id="q-rx5-2">
   <div class="quiz-q">Why is <code>{photos.length &gt; 0 &amp;&amp; &lt;Grid /&gt;}</code> safer than <code>{photos.length &amp;&amp; &lt;Grid /&gt;}</code>?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-rx5-2','Performance is the same — correctness is the issue.')"><span class="quiz-radio"></span> It\'s faster</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-rx5-2','Correct. When photos is empty, photos.length is 0. React renders 0 as text. Using > 0 converts it to a boolean (false), which React skips entirely.')"><span class="quiz-radio"></span> When photos is empty, photos.length is 0 — React renders "0" on screen; > 0 returns false, which renders nothing</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-rx5-2','Both work — the difference is what happens when the array is empty.')"><span class="quiz-radio"></span> They are identical — both are correct</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-rx5-2" data-exp="Performance is the same — correctness is the issue." onclick="answer(this)"><span class="quiz-radio"></span> It&#39;s faster</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-rx5-2" data-exp="Correct. When photos is empty, photos.length is 0. React renders 0 as text. Using > 0 converts it to a boolean (false), which React skips entirely." onclick="answer(this)"> 0 converts it to a boolean (false), which React skips entirely.')"><span class="quiz-radio"></span> When photos is empty, photos.length is 0 — React renders "0" on screen; > 0 returns false, which renders nothing</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-rx5-2" data-exp="Both work — the difference is what happens when the array is empty." onclick="answer(this)"><span class="quiz-radio"></span> They are identical — both are correct</div>
   </div>
   <div class="quiz-exp" id="q-rx5-2-exp"></div>
 </div>
@@ -4286,18 +4286,18 @@ registerLesson({ id:'rx6', modId:'react', num:6, title:'Fetching Data in React',
 <div class="quiz-item" id="q-rx6-1">
   <div class="quiz-q">In the data-fetching pattern, why is error state set to null at the start of a new fetch?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-rx6-1','Setting null doesn\'t prevent errors — it clears the previous error display.')"><span class="quiz-radio"></span> To prevent errors from being thrown</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-rx6-1','Correct. If a previous search failed and the user tries again, the old error message would still show while the new fetch runs. Clearing it gives the user a clean loading state for the new attempt.')"><span class="quiz-radio"></span> To clear any previous error message so it doesn\'t show during the new fetch</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-rx6-1','null doesn\'t help with memory — it\'s about UI state.')"><span class="quiz-radio"></span> For memory management</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-rx6-1" data-exp="Setting null doesn't prevent errors — it clears the previous error display." onclick="answer(this)"><span class="quiz-radio"></span> To prevent errors from being thrown</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-rx6-1" data-exp="Correct. If a previous search failed and the user tries again, the old error message would still show while the new fetch runs. Clearing it gives the user a clean loading state for the new attempt." onclick="answer(this)"><span class="quiz-radio"></span> To clear any previous error message so it doesn&#39;t show during the new fetch</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-rx6-1" data-exp="null doesn't help with memory — it's about UI state." onclick="answer(this)"><span class="quiz-radio"></span> For memory management</div>
   </div>
   <div class="quiz-exp" id="q-rx6-1-exp"></div>
 </div>
 <div class="quiz-item" id="q-rx6-2">
   <div class="quiz-q">What problem does the <code>cancelled</code> flag solve in the useEffect fetch pattern?</div>
   <div class="quiz-opts">
-    <div class="quiz-opt" onclick="answer(this,false,'q-rx6-2','The cancelled flag is about stale closures and race conditions, not authentication.')"><span class="quiz-radio"></span> It prevents unauthorized API requests</div>
-    <div class="quiz-opt" onclick="answer(this,true,'q-rx6-2','Correct. If the user changes the query before the first fetch completes, both fetches run. Without cancellation, whichever resolves last overwrites the correct results. The cancelled flag makes the old fetch\'s setPhotos call a no-op.')"><span class="quiz-radio"></span> It prevents a stale fetch from overwriting newer results when the query changes before the fetch completes</div>
-    <div class="quiz-opt" onclick="answer(this,false,'q-rx6-2','React doesn\'t automatically cancel fetch requests on re-render — the cancelled flag is a manual solution.')"><span class="quiz-radio"></span> It automatically cancels the network request</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-rx6-2" data-exp="The cancelled flag is about stale closures and race conditions, not authentication." onclick="answer(this)"><span class="quiz-radio"></span> It prevents unauthorized API requests</div>
+    <div class="quiz-opt" data-correct="true" data-qid="q-rx6-2" data-exp="Correct. If the user changes the query before the first fetch completes, both fetches run. Without cancellation, whichever resolves last overwrites the correct results. The cancelled flag makes the old fetch's setPhotos call a no-op." onclick="answer(this)"><span class="quiz-radio"></span> It prevents a stale fetch from overwriting newer results when the query changes before the fetch completes</div>
+    <div class="quiz-opt" data-correct="false" data-qid="q-rx6-2" data-exp="React doesn't automatically cancel fetch requests on re-render — the cancelled flag is a manual solution." onclick="answer(this)"><span class="quiz-radio"></span> It automatically cancels the network request</div>
   </div>
   <div class="quiz-exp" id="q-rx6-2-exp"></div>
 </div>
